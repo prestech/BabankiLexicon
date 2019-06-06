@@ -39,7 +39,7 @@ public class LexiconFragment extends Fragment {
         recyclerView.setLayoutManager(layoutManager);
 
         //setup adapter
-        mAdapter = new LexAdapter(view.getContext(), false);
+        mAdapter = new LexAdapter(view.getContext(), LexAdapter.VIEW_CONTEXT.LEXICON_LIST);
         recyclerView.setAdapter(mAdapter);
 
         return view;

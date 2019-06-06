@@ -21,30 +21,43 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
     //private List<Lexicon> lexDataSet;
     private LexDataSource lexDataSource;
     private Context context;
-    private boolean isFavoriteView;
+    private VIEW_CONTEXT view_context;
     private static AudioManager audioManager;
+    private String[] alphabets = {"Aa" , "Bb" , "Bvbv" , "Chch" , "Dd" , "Dzdz" , "Ee" , "Əə" , "Ff" , "Gg" , "Ghgh" , "Ii" , "Ɨɨ" , "Jj" , "ʼ" , "Kk" , "Ll" , "Mm" , "Nn" , "Nyny" , "Ŋŋ" , "Oo" , "Pfpf" , "Ss" , "Shsh" , "Tt" , "Tsts" , "Uu" , "Ʉʉ" , "Vv" , "Ww" , "Yy" , "Zz" , "Zhzh"};
 
+    public static enum VIEW_CONTEXT  {FAVORITE_LIST, LEXICON_LIST, ALPHABET_LIST};
 
     public static class LexViewHolder extends RecyclerView.ViewHolder{
 
-        public TextView engTextView, kjmTextView;
+        public TextView engTextView, kjmTextView, alphabetTv;
         public ImageButton favBtn, audioBtn;
 
-        public  LexViewHolder(View view){
+        public  LexViewHolder(View view, VIEW_CONTEXT view_context ){
             super(view);
-            engTextView = view.findViewById(R.id.eng_textview);
-            kjmTextView = view.findViewById(R.id.kjm_textview);
-            favBtn = view.findViewById(R.id.favBtn);
-            audioBtn = view.findViewById(R.id.adioBtn);
+
+            switch (view_context){
+
+                case LEXICON_LIST:
+                case FAVORITE_LIST:
+                    engTextView = view.findViewById(R.id.eng_textview);
+                    kjmTextView = view.findViewById(R.id.kjm_textview);
+                    favBtn = view.findViewById(R.id.favBtn);
+                    audioBtn = view.findViewById(R.id.adioBtn);
+                    break;
+                case ALPHABET_LIST:
+                    alphabetTv = view.findViewById(R.id.alpabet_textview);
+                    break;
+            }
+
 
         }
 
     }//LexViewHolder Ends
 
-    public LexAdapter(Context context, boolean isFavoriteView){
+    public LexAdapter(Context context, VIEW_CONTEXT view_context){
         this.context = context;
         this.lexDataSource = new LexDataSource(context);
-        this.isFavoriteView = isFavoriteView;
+        this.view_context = view_context;
 
         if(audioManager == null){
             audioManager = new AudioManager(context);
@@ -59,9 +72,26 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
     @NonNull
     @Override
     public LexViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
-        View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.activity_lex_list_view, viewGroup, false);
 
-        LexViewHolder lexViewHolder = new LexViewHolder(view);
+        View view = null;
+        LexViewHolder lexViewHolder = null;
+
+        switch (view_context){
+            case LEXICON_LIST:
+            case FAVORITE_LIST:
+                view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.activity_lex_list_view, viewGroup, false);
+                break;
+            case ALPHABET_LIST:
+                view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.alphabet_list, viewGroup, false);
+                break;
+        }
+
+        if (view != null) {
+             lexViewHolder = new LexViewHolder(view, view_context);
+        }else {
+            //throw exception
+            new Exception("View is null");
+        }
 
         return lexViewHolder;
 
@@ -71,27 +101,32 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
     public void onBindViewHolder(@NonNull LexViewHolder lexViewHolder, int dataIndex) {
         Lexicon lexicon;
         String lexiconId;
-        if(isFavoriteView == false) {
+        switch(view_context){
+            case LEXICON_LIST:
+            case FAVORITE_LIST:
             lexicon = lexDataSource.getLexicon("" + dataIndex);//lexDataSet.get(((dataIndex)%30));
-        }
-        else{
-            lexicon = lexDataSource.getFavLexicon(dataIndex);
-        }
-        if(lexicon != null) {
-            lexiconId = lexicon.getLexiconId()+"";
 
-            lexViewHolder.kjmTextView.setText(lexicon.getKejomWord());
-            lexViewHolder.engTextView.setText(lexicon.getEnglishWord());
+            if(lexicon != null) {
+                lexiconId = lexicon.getLexiconId()+"";
 
-            if(FavLexManager.lexIsFavorite(lexiconId) == false){
-                lexViewHolder.favBtn.setImageResource(android.R.drawable.btn_star_big_off);
-            }else{
-                lexViewHolder.favBtn.setImageResource(android.R.drawable.btn_star_big_on);
+                lexViewHolder.kjmTextView.setText(lexicon.getKejomWord());
+                lexViewHolder.engTextView.setText(lexicon.getEnglishWord());
+
+                if(FavLexManager.lexIsFavorite(lexiconId) == false){
+                    lexViewHolder.favBtn.setImageResource(android.R.drawable.btn_star_big_off);
+                }else{
+                    lexViewHolder.favBtn.setImageResource(android.R.drawable.btn_star_big_on);
+                }
+
+                lexViewHolder.favBtn.setOnClickListener(new ClickListener(lexicon, dataIndex));
+                lexViewHolder.audioBtn.setOnClickListener(new ClickListener(lexicon, dataIndex));
             }
-
-            lexViewHolder.favBtn.setOnClickListener(new ClickListener(lexicon, dataIndex));
-            lexViewHolder.audioBtn.setOnClickListener(new ClickListener(lexicon, dataIndex));
+            break;
+            case ALPHABET_LIST:
+                lexViewHolder.alphabetTv.setText(alphabets[dataIndex]);
+                break;
         }
+
 
     }//onBindViewHolder() Ends
 
@@ -103,8 +138,15 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
     @Override
     //TODO:Make the list an Endless list in the future
     public int getItemCount() {
-        if(isFavoriteView == false) return 1993;
-        return FavLexManager.getFavListSize();
+        switch (view_context){
+            case FAVORITE_LIST:
+                return FavLexManager.getFavListSize();
+            case ALPHABET_LIST:
+                return 34;
+            case LEXICON_LIST:
+                return 1993;
+                default: return  0;
+        }
     }//getItemCount() Ends
 
 
@@ -131,12 +173,9 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
                 favBtn.setImageResource(android.R.drawable.btn_star_big_on);
             }
 
-            if(isFavoriteView == true){
+            if(view_context == VIEW_CONTEXT.FAVORITE_LIST){
                 notifyItemRemoved(indexOfData);
             }
-        }
-
-        private void playAudio(){
         }
 
         @Override
@@ -146,8 +185,10 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
                     replaceFavBtnImage( (ImageButton) v, indexOfData);
                     break;
                 case R.id.adioBtn:
-                    Log.d("PRESDEBUG", "Audio Btn clicked"+v.getId());
-                    audioManager.playAudio(lexicon.getKejomWord());
+                    if(lexicon != null) {
+                        Log.d("PRESDEBUG", lexicon.getKejomWord() + " Audio Btn clicked" + v.getId());
+                        audioManager.playAudio(lexicon.getKejomWord());
+                    }
                     break;
             }
         }//onClick Ends

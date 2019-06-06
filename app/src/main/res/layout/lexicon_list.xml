@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_marginBottom="55dp">
+
+
+    <fragment
+        android:id="@+id/alphabet_frag"
+        android:name="com.prestech.babankilexicon.actvity.AlphabetFragment"
+        android:layout_width="45dp"
+        android:layout_height="match_parent" />
+
+    <fragment
+        android:id="@+id/lexicon_frag"
+        android:name="com.prestech.babankilexicon.actvity.LexiconFragment"
+        android:layout_width="390dp"
+        android:layout_height="match_parent"
+        android:layout_toRightOf="@id/alphabet_frag"/>
+
+</RelativeLayout>

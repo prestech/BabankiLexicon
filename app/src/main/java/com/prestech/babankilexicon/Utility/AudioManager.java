@@ -3,6 +3,7 @@ package com.prestech.babankilexicon.Utility;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
+import android.util.Log;
 
 import java.io.IOException;
 
@@ -17,6 +18,8 @@ public class AudioManager {
     }
     public void playAudio(String audioFile){
 
+        Log.d("PRESDEBUG", "Preparing to play audio for \""+audioFile+"\"");
+
         if(mediaPlayer != null){
             mediaPlayer.stop();
             mediaPlayer.release();
@@ -28,9 +31,14 @@ public class AudioManager {
         try {
             AssetFileDescriptor asd = context.getAssets().openFd("Kejom_Audio/"+audioFile.trim()+".mp3");
 
-            mediaPlayer.setOnPreparedListener(new MediaListener());
-            mediaPlayer.setDataSource(asd.getFileDescriptor(), asd.getStartOffset(), asd.getLength());
-            mediaPlayer.prepareAsync();
+            if(asd != null) {
+                mediaPlayer.setOnPreparedListener(new MediaListener());
+                mediaPlayer.setDataSource(asd.getFileDescriptor(), asd.getStartOffset(), asd.getLength());
+                mediaPlayer.prepareAsync();
+            }else{
+                Log.d("PRESDEBUG", "Audio is not available for \""+audioFile+"\"");
+
+            }
 
         } catch (IOException e ) {
             e.printStackTrace();

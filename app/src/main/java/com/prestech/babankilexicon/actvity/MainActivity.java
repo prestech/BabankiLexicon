@@ -18,7 +18,7 @@ public class MainActivity extends AppCompatActivity {
     private ViewPager viewPager;
     private FragmentManager fragmentManager;
     private FavFragment favFragment;
-    private LexiconFragment lexiconFragment;
+    private MainLexiconListFragment lexiconFragment;
     private FragmentTransaction fragTransaction;
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
                     fragTransaction.commit();
                     return true;
                 case R.id.navigation_dashboard:
-                    lexiconFragment = new LexiconFragment();
+                    lexiconFragment = new MainLexiconListFragment();
                     fragTransaction = fragmentManager.beginTransaction();
                     fragTransaction.replace(R.id.fragment_container, lexiconFragment);
                     fragTransaction.commit();
