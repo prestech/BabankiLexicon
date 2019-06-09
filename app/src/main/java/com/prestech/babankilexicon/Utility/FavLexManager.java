@@ -24,6 +24,8 @@ public class FavLexManager {
     }
 
     public static boolean lexIsFavorite(String lexiconId){
+        if(favList == null)return  false;
+
         return favList.contains(lexiconId);
     }
 
@@ -38,7 +40,7 @@ public class FavLexManager {
         favLexIsAltered = true;
     }
 
-    public  static void readFavListFromFile(){
+    private  static void readFavListFromFile(){
         try{
             ObjectMapper objectMapper = new ObjectMapper();
             favList = objectMapper.readValue(file, objectMapper.getTypeFactory().constructCollectionType(ArrayList.class, String.class) );
