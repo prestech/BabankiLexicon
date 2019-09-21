@@ -3,7 +3,6 @@ package com.prestech.babankilexicon.actvity;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -12,7 +11,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.prestech.babankilexicon.R;
-import com.prestech.babankilexicon.Utility.FavLexManager;
 import com.prestech.babankilexicon.view.LexAdapter;
 
 public class LexiconFragment extends Fragment {
@@ -28,7 +26,7 @@ public class LexiconFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
-        View view = inflater.inflate(R.layout.activity_lex, container, false);
+        View view = inflater.inflate(R.layout.lex_recycler_view, container, false);
 
 
         recyclerView = view.findViewById(R.id.lex_recycler_view);

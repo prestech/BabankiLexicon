@@ -44,6 +44,7 @@ public class AudioManager {
             e.printStackTrace();
         }
 
+        mediaPlayer = null;
 
     }//createMedia() Ends
 

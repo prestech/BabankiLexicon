@@ -23,7 +23,7 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
     private Context context;
     private VIEW_CONTEXT view_context;
     private static AudioManager audioManager;
-    private String[] alphabets = {"Aa" , "Bb" , "Bvbv" , "Chch" , "Dd" , "Dzdz" , "Ee" , "Əə" , "Ff" , "Gg" , "Ghgh" , "Ii" , "Ɨɨ" , "Jj" , "ʼ" , "Kk" , "Ll" , "Mm" , "Nn" , "Nyny" , "Ŋŋ" , "Oo" , "Pfpf" , "Ss" , "Shsh" , "Tt" , "Tsts" , "Uu" , "Ʉʉ" , "Vv" , "Ww" , "Yy" , "Zz" , "Zhzh"};
+    private String[] alphabets = {"A" , "B" , "Bv" , "Ch" , "D" , "Dz" , "E" , "Ə" , "Ff" , "G" , "Gh" , "I" , "Ɨ" , "J" , "ʼ" , "K" , "L" , "M" , "N" , "Ny" , "Ŋ" , "O" , "Pf" , "S" , "Sh" , "T" , "Ts" , "U" , "Ʉ" , "V" , "W" , "Y" , "Z" , "Zh"};
 
     public static enum VIEW_CONTEXT  {FAVORITE_LIST, LEXICON_LIST, ALPHABET_LIST};
 
@@ -79,10 +79,10 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
         switch (view_context){
             case LEXICON_LIST:
             case FAVORITE_LIST:
-                view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.activity_lex_list_view, viewGroup, false);
+                view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.lexicon_list_view, viewGroup, false);
                 break;
             case ALPHABET_LIST:
-                view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.alphabet_list, viewGroup, false);
+                view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.alphabet_list_view, viewGroup, false);
                 break;
         }
 
