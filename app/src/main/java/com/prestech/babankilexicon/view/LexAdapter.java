@@ -1,6 +1,8 @@
 package com.prestech.babankilexicon.view;
 
+import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -24,6 +26,8 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
     private VIEW_CONTEXT view_context;
     private static AudioManager audioManager;
     private String[] alphabets = {"A" , "B" , "Bv" , "Ch" , "D" , "Dz" , "E" , "Ə" , "Ff" , "G" , "Gh" , "I" , "Ɨ" , "J" , "ʼ" , "K" , "L" , "M" , "N" , "Ny" , "Ŋ" , "O" , "Pf" , "S" , "Sh" , "T" , "Ts" , "U" , "Ʉ" , "V" , "W" , "Y" , "Z" , "Zh"};
+
+    private Dialog dialog;
 
     public static enum VIEW_CONTEXT  {FAVORITE_LIST, LEXICON_LIST, ALPHABET_LIST};
 
@@ -80,6 +84,12 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
             case LEXICON_LIST:
             case FAVORITE_LIST:
                 view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.lexicon_list_view, viewGroup, false);
+                view.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        showDialog(context);
+                    }
+                });
                 break;
             case ALPHABET_LIST:
                 view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.alphabet_list_view, viewGroup, false);
@@ -194,5 +204,10 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
         }//onClick Ends
     }//ClickListener Ends
 
+    private void showDialog(Context context){
 
+        dialog = new Dialog(context);
+        dialog.setContentView(R.layout.lexicon_popup_view);
+        dialog.show();
+    }
 }//LexAdapter Ends
