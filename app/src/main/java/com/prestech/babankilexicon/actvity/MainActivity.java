@@ -14,10 +14,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.SearchView;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.prestech.babankilexicon.R;
 import com.prestech.babankilexicon.Utility.Constants;
@@ -30,6 +27,7 @@ public class MainActivity extends AppCompatActivity implements AlphabetFragment.
     private MainLexiconListFragment mainLexiconFragment;
     private FragmentTransaction fragTransaction;
     private LexiconFragment lexiconFragment;
+    private static String logTag = Constants.Logs.logTag+":"+MainActivity.class.getName();
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -91,6 +89,8 @@ public class MainActivity extends AppCompatActivity implements AlphabetFragment.
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.options_menu, menu);
 
+        String mlogTag = logTag+":onAttachFragment";
+
         // Get the SearchView and set the searchable configuration
         SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
         final SearchView searchView = (SearchView) menu.findItem(R.id.search).getActionView();
@@ -103,7 +103,7 @@ public class MainActivity extends AppCompatActivity implements AlphabetFragment.
             @Override
             public boolean onQueryTextSubmit(String query) {
 
-                Log.i("SEARCH VIEW", "Search query: "+query);
+                Log.i(logTag, "Search query: "+query);
 
                 return false;
 
@@ -121,6 +121,7 @@ public class MainActivity extends AppCompatActivity implements AlphabetFragment.
     @Override
     public void onAttachFragment(Fragment fragment) {
         super.onAttachFragment(fragment);
+        String mlogTag = logTag+":onAttachFragment";
 
         if(fragment instanceof MainLexiconListFragment){
             MainLexiconListFragment mainLexiconListFragment = (MainLexiconListFragment)fragment;
@@ -130,14 +131,17 @@ public class MainActivity extends AppCompatActivity implements AlphabetFragment.
 
     @Override
     public void retrieveSelectedIndex(String message) {
-        Log.i("FRAG MESSAGE","Message Received by main activity"+message);
+
+        String mlogTag = logTag+":retrieveSelectedIndex";
+
+        Log.i(mlogTag,"Message Received by main activity"+message);
         //call
         MainLexiconListFragment mainLexiconListFragment = (MainLexiconListFragment) getSupportFragmentManager().findFragmentByTag(Constants.FragmentTags.mainFragment);
 
         if(mainLexiconListFragment != null) {
             mainLexiconListFragment.receiveItemCharIndex(message);
         }else{
-            Log.i("LEXICON_LOG", "lexiconFragment is null");
+            Log.i(mlogTag, "lexiconFragment is null");
         }
 
     }

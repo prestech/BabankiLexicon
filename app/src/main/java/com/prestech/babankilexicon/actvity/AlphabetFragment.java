@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.prestech.babankilexicon.R;
+import com.prestech.babankilexicon.Utility.Constants;
 import com.prestech.babankilexicon.view.LexAdapter;
 
 public class AlphabetFragment extends Fragment {
@@ -20,6 +21,7 @@ public class AlphabetFragment extends Fragment {
     private RecyclerView.LayoutManager layoutManager;
     private static OnCharIndexSelectListener charIndexSelectListener;
     private View view;
+    private static String logTag = Constants.Logs.logTag+":"+AlphabetFragment.class.getName();
 
     @Nullable
     @Override

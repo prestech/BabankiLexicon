@@ -10,10 +10,12 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.prestech.babankilexicon.R;
+import com.prestech.babankilexicon.Utility.Constants;
 
 public class MainLexiconListFragment extends Fragment {
 
     private static AlphabetFragment.OnCharIndexSelectListener onCharIndexSelectListener;
+    private static String logTag = Constants.Logs.logTag+":"+MainLexiconListFragment.class.getName();
 
     @Nullable
     @Override
@@ -31,15 +33,17 @@ public class MainLexiconListFragment extends Fragment {
     }
 
     public void receiveItemCharIndex(String charIndex){
+        String mLogTag = logTag+":"+charIndex;
+
         //Navigate to the index
-        Log.i("LEXICON LOG", "Char index recieved in MainLexiconListFragment: "+charIndex);
+        Log.i(mLogTag, "Char index recieved in MainLexiconListFragment: "+charIndex);
 
         LexiconFragment lexiconFragment = (LexiconFragment)getChildFragmentManager().findFragmentById(R.id.lexicon_frag);
 
         if(lexiconFragment != null){
             lexiconFragment.receiveItemCharIndex(charIndex);
         }else{
-            //TODO: add null log
+            Log.w(mLogTag, "lexiconFragment is null");
         }
 
     }

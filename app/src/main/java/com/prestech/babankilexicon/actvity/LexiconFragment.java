@@ -10,8 +10,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.prestech.babankilexicon.R;
+import com.prestech.babankilexicon.Utility.Constants;
 import com.prestech.babankilexicon.view.LexAdapter;
 
 public class LexiconFragment extends Fragment {
@@ -21,7 +23,8 @@ public class LexiconFragment extends Fragment {
     private RecyclerView.LayoutManager layoutManager;
 
     String [] lexData =new String[100];
-
+    private static String logTag = Constants.Logs.logTag+":"+AlphabetFragment.class.getName();
+    int scrollIndex = 0;
 
     @Nullable
     @Override
@@ -43,12 +46,42 @@ public class LexiconFragment extends Fragment {
 
         return view;
     }
-
-
     public void receiveItemCharIndex(String charIndex){
-        //Navigate to the index
-        Log.i("LEXICON LOG", "Char index recieved in LexiconFragment: "+charIndex);
+        String mLogTag = logTag+":receiveItemCharIndex";
+        Log.i(mLogTag, "Char index recieved in LexiconFragment: "+charIndex);
+
+        //TODO Scroll to the position of the CharIndex: Require JSON restructure
+
+        int index = 0; //TODO: get the index of charIndex
+
+        //i++;
+        scrollView(index);
     }
 
+
+    void scrollView(final int index){
+        recyclerView.post(new Runnable() {
+            @Override
+            public void run() {
+                //int i = 8;
+
+
+                    View view = recyclerView.getChildAt(1);
+                    if(view != null) {
+                        Log.i(logTag, "Position: " + index);
+                        TextView textView = (TextView) view.findViewById(R.id.kjm_textview);
+                        String value = textView.getText().toString();
+                        Log.i(logTag, "Lexicon at position: " + value);
+                    }
+
+                    recyclerView.scrollToPosition(index);
+
+                   // i++;
+               // }
+
+
+            }
+        });
+    }
 
 }
