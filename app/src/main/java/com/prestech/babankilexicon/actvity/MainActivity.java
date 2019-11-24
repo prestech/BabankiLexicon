@@ -20,14 +20,16 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.prestech.babankilexicon.R;
+import com.prestech.babankilexicon.Utility.Constants;
 import com.prestech.babankilexicon.Utility.FavLexManager;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements AlphabetFragment.OnCharIndexSelectListener {
     private ViewPager viewPager;
     private FragmentManager fragmentManager;
     private FavFragment favFragment;
-    private MainLexiconListFragment lexiconFragment;
+    private MainLexiconListFragment mainLexiconFragment;
     private FragmentTransaction fragTransaction;
+    private LexiconFragment lexiconFragment;
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -42,9 +44,9 @@ public class MainActivity extends AppCompatActivity {
                     fragTransaction.commit();
                     return true;
                 case R.id.navigation_dashboard:
-                    lexiconFragment = new MainLexiconListFragment();
+                    mainLexiconFragment = new MainLexiconListFragment();
                     fragTransaction = fragmentManager.beginTransaction();
-                    fragTransaction.replace(R.id.fragment_container, lexiconFragment);
+                    fragTransaction.replace(R.id.fragment_container, mainLexiconFragment, Constants.FragmentTags.mainFragment);
                     fragTransaction.commit();
                     return true;
                 case R.id.navigation_notifications:
@@ -70,6 +72,8 @@ public class MainActivity extends AppCompatActivity {
         navView.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
         FavLexManager.initializeManager(getApplication());
+
+        AlphabetFragment.setOnCharIndexSelectListener(this);
 
     }
 
@@ -113,4 +117,30 @@ public class MainActivity extends AppCompatActivity {
 
         return true;
     }
+
+    @Override
+    public void onAttachFragment(Fragment fragment) {
+        super.onAttachFragment(fragment);
+
+        if(fragment instanceof MainLexiconListFragment){
+            MainLexiconListFragment mainLexiconListFragment = (MainLexiconListFragment)fragment;
+            lexiconFragment = (LexiconFragment) mainLexiconListFragment.getFragmentManager().findFragmentById(R.id.lexicon_frag);
+        }
+    }
+
+    @Override
+    public void retrieveSelectedIndex(String message) {
+        Log.i("FRAG MESSAGE","Message Received by main activity"+message);
+        //call
+        MainLexiconListFragment mainLexiconListFragment = (MainLexiconListFragment) getSupportFragmentManager().findFragmentByTag(Constants.FragmentTags.mainFragment);
+
+        if(mainLexiconListFragment != null) {
+            mainLexiconListFragment.receiveItemCharIndex(message);
+        }else{
+            Log.i("LEXICON_LOG", "lexiconFragment is null");
+        }
+
+    }
+
+
 }

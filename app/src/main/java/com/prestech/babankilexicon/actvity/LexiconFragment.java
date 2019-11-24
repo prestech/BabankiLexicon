@@ -6,6 +6,7 @@ import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,5 +43,12 @@ public class LexiconFragment extends Fragment {
 
         return view;
     }
+
+
+    public void receiveItemCharIndex(String charIndex){
+        //Navigate to the index
+        Log.i("LEXICON LOG", "Char index recieved in LexiconFragment: "+charIndex);
+    }
+
 
 }

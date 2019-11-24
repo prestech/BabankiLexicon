@@ -7,6 +7,7 @@ import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
@@ -16,6 +17,7 @@ import com.prestech.babankilexicon.R;
 import com.prestech.babankilexicon.Utility.AudioManager;
 import com.prestech.babankilexicon.Utility.FavLexManager;
 import com.prestech.babankilexicon.Utility.LexDataSource;
+import com.prestech.babankilexicon.actvity.AlphabetFragment;
 import com.prestech.babankilexicon.model.Lexicon;
 
 public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
@@ -25,6 +27,8 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
     private Context context;
     private VIEW_CONTEXT view_context;
     private static AudioManager audioManager;
+    private AlphabetFragment.OnCharIndexSelectListener onCharIndexSelectListener;
+
     private String[] alphabets = {"A" , "B" , "Bv" , "Ch" , "D" , "Dz" , "E" , "Ə" , "Ff" , "G" , "Gh" , "I" , "Ɨ" , "J" , "ʼ" , "K" , "L" , "M" , "N" , "Ny" , "Ŋ" , "O" , "Pf" , "S" , "Sh" , "T" , "Ts" , "U" , "Ʉ" , "V" , "W" , "Y" , "Z" , "Zh"};
 
     private Dialog dialog;
@@ -69,6 +73,11 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
         //lexDataSet =  lexDataSource.loadInitialData();
     }
 
+    public  LexAdapter(Context context, VIEW_CONTEXT view_context, AlphabetFragment.OnCharIndexSelectListener listener){
+        this(context, view_context);
+        this.onCharIndexSelectListener = listener;
+    }
+
 
     /**
      * Interface implementation
@@ -93,6 +102,21 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
                 break;
             case ALPHABET_LIST:
                 view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.alphabet_list_view, viewGroup, false);
+
+                view.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        if(onCharIndexSelectListener != null) {
+                            TextView textView = (TextView)view.findViewById(R.id.alpabet_textview);
+                            String value = textView.getText().toString();
+                            onCharIndexSelectListener.retrieveSelectedIndex("Message from onCharIndexSelectListener: "+value);
+
+                        }else{
+                            Log.i("LEXICON_LOG", "onCharIndexSelectListener is null");
+                        }
+                    }
+                });
+
                 break;
         }
 
@@ -132,7 +156,9 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
                 lexViewHolder.audioBtn.setOnClickListener(new ClickListener(lexicon, dataIndex));
             }
             break;
+
             case ALPHABET_LIST:
+                Log.i("LEXICON_LOG", "Setting alphebet char index value "+alphabets[dataIndex]);
                 lexViewHolder.alphabetTv.setText(alphabets[dataIndex]);
                 break;
         }
