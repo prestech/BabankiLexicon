@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 //import com;
 import com.prestech.babankilexicon.R;
 import com.prestech.babankilexicon.model.Lexicon;
+import com.prestech.babankilexicon.viewHelper.LexAdapter;
 
 import org.json.JSONObject;
 
@@ -16,7 +17,9 @@ import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class LexDataSource {
@@ -25,6 +28,8 @@ public class LexDataSource {
     private static JsonNode rootNode = null;
     private static ObjectMapper objectMapper = null;
     private List<Lexicon> dataBufferList = null;
+    public final String[] alphabets = {"A" , "B" , "Bv" , "Ch" , "D" , "Dz" , "E" , "Ə" , "Ff" , "G" , "Gh" , "I" , "Ɨ" , "J" , "ʼ" , "K" , "L" , "M" , "N" , "Ny" , "Ŋ" , "O" , "Pf" , "S" , "Sh" , "T" , "Ts" , "U" , "Ʉ" , "V" , "W" , "Y" , "Z" , "Zh"};
+    public final Map<String, Integer> alphabetIndex = new HashMap<>();
 
     //read the data from the JSON and Parse them to object
     //control the number of Lexicon objects created
@@ -49,6 +54,10 @@ public class LexDataSource {
             }
 
         }//if Ends
+
+        for (String a: alphabets ) {
+            alphabetIndex.put(a, 0);
+        }
     }
 
     public Lexicon getLexicon(String lexiconId){
@@ -61,6 +70,30 @@ public class LexDataSource {
         }
         return null;
     }
+
+
+    public int findAlphaIndex(String key){
+
+        String tribalWord = "";
+        Lexicon lexicon = null;
+        for(int aIndex=0; aIndex < 1993; aIndex++){
+
+            lexicon = getLexicon(""+aIndex);
+            if (lexicon != null){
+                tribalWord = lexicon.getKejomWord();
+            }else{
+                return -1;
+            }
+
+            if(tribalWord.toLowerCase().startsWith(key.toLowerCase())){
+
+                return aIndex;
+            }
+
+        }
+        return -1;
+    }
+
 
     public List<Lexicon> loadInitialData(){
 
@@ -75,6 +108,7 @@ public class LexDataSource {
 
         return dataBufferList;
     }
+
     public List<Lexicon> provideData(int startIndex, int displace){
 
         Lexicon lexicon;

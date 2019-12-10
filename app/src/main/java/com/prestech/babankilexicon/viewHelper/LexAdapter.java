@@ -1,13 +1,11 @@
-package com.prestech.babankilexicon.view;
+package com.prestech.babankilexicon.viewHelper;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
@@ -20,6 +18,9 @@ import com.prestech.babankilexicon.Utility.LexDataSource;
 import com.prestech.babankilexicon.actvity.AlphabetFragment;
 import com.prestech.babankilexicon.model.Lexicon;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
 
     //private List<Lexicon> lexDataSet;
@@ -29,7 +30,7 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
     private static AudioManager audioManager;
     private AlphabetFragment.OnCharIndexSelectListener onCharIndexSelectListener;
 
-    private String[] alphabets = {"A" , "B" , "Bv" , "Ch" , "D" , "Dz" , "E" , "Ə" , "Ff" , "G" , "Gh" , "I" , "Ɨ" , "J" , "ʼ" , "K" , "L" , "M" , "N" , "Ny" , "Ŋ" , "O" , "Pf" , "S" , "Sh" , "T" , "Ts" , "U" , "Ʉ" , "V" , "W" , "Y" , "Z" , "Zh"};
+    public final String[] alphabets = {"A" , "B" , "Bv" , "Ch" , "D" , "Dz" , "E" , "Ə" , "F" , "G" , "Gh" , "I" , "Ɨ" , "J" , "ʼ" , "K" , "L" , "M" , "N" , "Ny" , "Ŋ" , "O" , "Pf" , "S" , "Sh" , "T" , "Ts" , "U" , "Ʉ" , "V" , "W" , "Y" , "Z" , "Zh"};
 
     private Dialog dialog;
 
@@ -70,6 +71,8 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
         if(audioManager == null){
             audioManager = new AudioManager(context);
         }
+
+
         //lexDataSet =  lexDataSource.loadInitialData();
     }
 
@@ -109,7 +112,16 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
                         if(onCharIndexSelectListener != null) {
                             TextView textView = (TextView)view.findViewById(R.id.alpabet_textview);
                             String value = textView.getText().toString();
-                            onCharIndexSelectListener.retrieveSelectedIndex("Message from onCharIndexSelectListener: "+value);
+
+                            int alpaIndex = lexDataSource.findAlphaIndex(value);
+                            if(alpaIndex == -1){
+                                return;
+                            }
+                            alpaIndex = alpaIndex+7;
+
+                            System.out.println("Alphabet index: "+alpaIndex);
+
+                            onCharIndexSelectListener.retrieveSelectedIndex(alpaIndex);
 
                         }else{
                             Log.i("LEXICON_LOG", "onCharIndexSelectListener is null");
@@ -135,7 +147,10 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
     public void onBindViewHolder(@NonNull LexViewHolder lexViewHolder, int dataIndex) {
         Lexicon lexicon;
         String lexiconId;
+        String tribalWord;
+
         switch(view_context){
+
             case LEXICON_LIST:
             case FAVORITE_LIST:
             lexicon = lexDataSource.getLexicon("" + dataIndex);//lexDataSet.get(((dataIndex)%30));
@@ -145,6 +160,7 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
 
                 lexViewHolder.kjmTextView.setText(lexicon.getKejomWord());
                 lexViewHolder.engTextView.setText(lexicon.getEnglishWord());
+
 
                 if(FavLexManager.lexIsFavorite(lexiconId) == false){
                     lexViewHolder.favBtn.setImageResource(android.R.drawable.btn_star_big_off);
@@ -160,6 +176,11 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
             case ALPHABET_LIST:
                 Log.i("LEXICON_LOG", "Setting alphebet char index value "+alphabets[dataIndex]);
                 lexViewHolder.alphabetTv.setText(alphabets[dataIndex]);
+                //int alpaIndex = lexDataSource.findAlphaIndex(alphabets[dataIndex]);
+
+                //Log.i("ALPHABET LEXICON_LOG", " alphebet char index value "+alpaIndex);
+
+
                 break;
         }
 

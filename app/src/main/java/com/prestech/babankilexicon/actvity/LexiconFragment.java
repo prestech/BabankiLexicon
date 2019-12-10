@@ -14,7 +14,7 @@ import android.widget.TextView;
 
 import com.prestech.babankilexicon.R;
 import com.prestech.babankilexicon.Utility.Constants;
-import com.prestech.babankilexicon.view.LexAdapter;
+import com.prestech.babankilexicon.viewHelper.LexAdapter;
 
 public class LexiconFragment extends Fragment {
 
@@ -46,15 +46,13 @@ public class LexiconFragment extends Fragment {
 
         return view;
     }
-    public void receiveItemCharIndex(String charIndex){
+
+    public void receiveItemCharIndex(int index){
         String mLogTag = logTag+":receiveItemCharIndex";
-        Log.i(mLogTag, "Char index recieved in LexiconFragment: "+charIndex);
+        Log.i(mLogTag, "Char index recieved in LexiconFragment: "+index);
 
         //TODO Scroll to the position of the CharIndex: Require JSON restructure
 
-        int index = 0; //TODO: get the index of charIndex
-
-        //i++;
         scrollView(index);
     }
 
@@ -64,7 +62,6 @@ public class LexiconFragment extends Fragment {
             @Override
             public void run() {
                 //int i = 8;
-
 
                     View view = recyclerView.getChildAt(1);
                     if(view != null) {

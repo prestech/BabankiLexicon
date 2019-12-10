@@ -32,16 +32,16 @@ public class MainLexiconListFragment extends Fragment {
 
     }
 
-    public void receiveItemCharIndex(String charIndex){
-        String mLogTag = logTag+":"+charIndex;
+    public void receiveItemCharIndex(int index){
+        String mLogTag = logTag+":"+index;
 
         //Navigate to the index
-        Log.i(mLogTag, "Char index recieved in MainLexiconListFragment: "+charIndex);
+        Log.i(mLogTag, "Char index recieved in MainLexiconListFragment: "+index);
 
         LexiconFragment lexiconFragment = (LexiconFragment)getChildFragmentManager().findFragmentById(R.id.lexicon_frag);
 
         if(lexiconFragment != null){
-            lexiconFragment.receiveItemCharIndex(charIndex);
+            lexiconFragment.receiveItemCharIndex(index);
         }else{
             Log.w(mLogTag, "lexiconFragment is null");
         }

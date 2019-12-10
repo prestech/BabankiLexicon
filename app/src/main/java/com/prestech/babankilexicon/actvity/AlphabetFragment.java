@@ -12,7 +12,7 @@ import android.view.ViewGroup;
 
 import com.prestech.babankilexicon.R;
 import com.prestech.babankilexicon.Utility.Constants;
-import com.prestech.babankilexicon.view.LexAdapter;
+import com.prestech.babankilexicon.viewHelper.LexAdapter;
 
 public class AlphabetFragment extends Fragment {
 
@@ -65,7 +65,7 @@ public class AlphabetFragment extends Fragment {
      * This interface is used as a communication channel
      */
     public interface OnCharIndexSelectListener{
-         void retrieveSelectedIndex(String message);
+         void retrieveSelectedIndex(int index);
     }
 
 }

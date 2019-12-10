@@ -130,16 +130,16 @@ public class MainActivity extends AppCompatActivity implements AlphabetFragment.
     }
 
     @Override
-    public void retrieveSelectedIndex(String message) {
+    public void retrieveSelectedIndex(int index) {
 
         String mlogTag = logTag+":retrieveSelectedIndex";
 
-        Log.i(mlogTag,"Message Received by main activity"+message);
+        Log.i(mlogTag,"Message Received by main activity"+index);
         //call
         MainLexiconListFragment mainLexiconListFragment = (MainLexiconListFragment) getSupportFragmentManager().findFragmentByTag(Constants.FragmentTags.mainFragment);
 
         if(mainLexiconListFragment != null) {
-            mainLexiconListFragment.receiveItemCharIndex(message);
+            mainLexiconListFragment.receiveItemCharIndex(index);
         }else{
             Log.i(mlogTag, "lexiconFragment is null");
         }

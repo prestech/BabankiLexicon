@@ -11,7 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.prestech.babankilexicon.R;
-import com.prestech.babankilexicon.view.LexAdapter;
+import com.prestech.babankilexicon.viewHelper.LexAdapter;
 
 public class FavFragment extends Fragment {
 
