@@ -73,7 +73,9 @@ public class MainActivity extends AppCompatActivity implements AlphabetFragment.
 
         AlphabetFragment.setOnCharIndexSelectListener(this);
 
+
     }
+
 
 
     @Override
@@ -86,7 +88,7 @@ public class MainActivity extends AppCompatActivity implements AlphabetFragment.
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the options menu from XML
-        MenuInflater inflater = getMenuInflater();
+       /* MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.options_menu, menu);
 
         String mlogTag = logTag+":onAttachFragment";
@@ -98,22 +100,20 @@ public class MainActivity extends AppCompatActivity implements AlphabetFragment.
         searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
         searchView.setIconifiedByDefault(true); // Do not iconify the widget; expand it by default
 
-        //implement setOnQueryTextListener(): This call back is called when the user press the search button
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+
+
+        searchView.setOnCloseListener(new SearchView.OnCloseListener() {
             @Override
-            public boolean onQueryTextSubmit(String query) {
+            public boolean onClose() {
+                Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.lexicon_frag);
+                FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
 
-                Log.i(logTag, "Search query: "+query);
-
-                return false;
-
-            }//onQueryTextSubmit() Ends
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
+                ft.detach(fragment);
+                ft.attach(fragment);
+                ft.commit();
                 return false;
             }
-        });//setOnQueryTextListener() Ends
+        });*/
 
         return true;
     }

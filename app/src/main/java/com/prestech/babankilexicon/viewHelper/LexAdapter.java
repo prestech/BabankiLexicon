@@ -8,6 +8,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
@@ -18,23 +20,27 @@ import com.prestech.babankilexicon.Utility.LexDataSource;
 import com.prestech.babankilexicon.actvity.AlphabetFragment;
 import com.prestech.babankilexicon.model.Lexicon;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
+public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder>  implements Filterable {
 
-    //private List<Lexicon> lexDataSet;
+    private ArrayList<Lexicon> listOfLexicon;
     private LexDataSource lexDataSource;
     private Context context;
     private VIEW_CONTEXT view_context;
     private static AudioManager audioManager;
     private AlphabetFragment.OnCharIndexSelectListener onCharIndexSelectListener;
+    private LexiconFilter lexiconFilter;
+    private boolean searchPublish = false;
 
     public final String[] alphabets = {"A" , "B" , "Bv" , "Ch" , "D" , "Dz" , "E" , "Ə" , "F" , "G" , "Gh" , "I" , "Ɨ" , "J" , "ʼ" , "K" , "L" , "M" , "N" , "Ny" , "Ŋ" , "O" , "Pf" , "S" , "Sh" , "T" , "Ts" , "U" , "Ʉ" , "V" , "W" , "Y" , "Z" , "Zh"};
 
     private Dialog dialog;
 
-    public static enum VIEW_CONTEXT  {FAVORITE_LIST, LEXICON_LIST, ALPHABET_LIST};
+
+    public static enum VIEW_CONTEXT  {FAVORITE_LIST, LEXICON_LIST, ALPHABET_LIST,SEARCH_LIST};
 
     public static class LexViewHolder extends RecyclerView.ViewHolder{
 
@@ -47,6 +53,7 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
             switch (view_context){
 
                 case LEXICON_LIST:
+                case SEARCH_LIST:
                 case FAVORITE_LIST:
                     engTextView = view.findViewById(R.id.eng_textview);
                     kjmTextView = view.findViewById(R.id.kjm_textview);
@@ -72,6 +79,9 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
             audioManager = new AudioManager(context);
         }
 
+        if(listOfLexicon == null){
+            listOfLexicon = new ArrayList<>();
+        }
 
         //lexDataSet =  lexDataSource.loadInitialData();
     }
@@ -95,6 +105,7 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
         switch (view_context){
             case LEXICON_LIST:
             case FAVORITE_LIST:
+            case SEARCH_LIST:
                 view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.lexicon_list_view, viewGroup, false);
                 view.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -145,33 +156,58 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull LexViewHolder lexViewHolder, int dataIndex) {
-        Lexicon lexicon;
+        Lexicon lexicon = null;
         String lexiconId;
         String tribalWord;
+        int listIndex = 0;
+
 
         switch(view_context){
 
             case LEXICON_LIST:
             case FAVORITE_LIST:
-            lexicon = lexDataSource.getLexicon("" + dataIndex);//lexDataSet.get(((dataIndex)%30));
 
-            if(lexicon != null) {
-                lexiconId = lexicon.getLexiconId()+"";
+                lexicon = lexDataSource.getLexicon("" + dataIndex);
 
-                lexViewHolder.kjmTextView.setText(lexicon.getKejomWord());
-                lexViewHolder.engTextView.setText(lexicon.getEnglishWord());
+                if(lexicon != null) {
+                    lexiconId = lexicon.getLexiconId()+"";
+
+                    lexViewHolder.kjmTextView.setText(lexicon.getKejomWord());
+                    lexViewHolder.engTextView.setText(lexicon.getEnglishWord());
 
 
-                if(FavLexManager.lexIsFavorite(lexiconId) == false){
-                    lexViewHolder.favBtn.setImageResource(android.R.drawable.btn_star_big_off);
-                }else{
-                    lexViewHolder.favBtn.setImageResource(android.R.drawable.btn_star_big_on);
+                    if(FavLexManager.lexIsFavorite(lexiconId) == false){
+                        lexViewHolder.favBtn.setImageResource(android.R.drawable.btn_star_big_off);
+                    }else{
+                        lexViewHolder.favBtn.setImageResource(android.R.drawable.btn_star_big_on);
+                    }
+
+                    lexViewHolder.favBtn.setOnClickListener(new ClickListener(lexicon, dataIndex));
+                    lexViewHolder.audioBtn.setOnClickListener(new ClickListener(lexicon, dataIndex));
+                }
+                break;
+            case SEARCH_LIST:
+
+                lexicon = listOfLexicon.get(dataIndex);
+
+                if(lexicon != null) {
+                    lexiconId = lexicon.getLexiconId()+"";
+
+                    lexViewHolder.kjmTextView.setText(lexicon.getKejomWord());
+                    lexViewHolder.engTextView.setText(lexicon.getEnglishWord());
+
+
+                    if(FavLexManager.lexIsFavorite(lexiconId) == false){
+                        lexViewHolder.favBtn.setImageResource(android.R.drawable.btn_star_big_off);
+                    }else{
+                        lexViewHolder.favBtn.setImageResource(android.R.drawable.btn_star_big_on);
+                    }
+
+                    lexViewHolder.favBtn.setOnClickListener(new ClickListener(lexicon, dataIndex));
+                    lexViewHolder.audioBtn.setOnClickListener(new ClickListener(lexicon, dataIndex));
                 }
 
-                lexViewHolder.favBtn.setOnClickListener(new ClickListener(lexicon, dataIndex));
-                lexViewHolder.audioBtn.setOnClickListener(new ClickListener(lexicon, dataIndex));
-            }
-            break;
+                break;
 
             case ALPHABET_LIST:
                 Log.i("LEXICON_LOG", "Setting alphebet char index value "+alphabets[dataIndex]);
@@ -179,8 +215,6 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
                 //int alpaIndex = lexDataSource.findAlphaIndex(alphabets[dataIndex]);
 
                 //Log.i("ALPHABET LEXICON_LOG", " alphebet char index value "+alpaIndex);
-
-
                 break;
         }
 
@@ -202,7 +236,9 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
                 return 34;
             case LEXICON_LIST:
                 return 1993;
-                default: return  0;
+            case SEARCH_LIST:
+                return listOfLexicon.size();
+            default: return  0;
         }
     }//getItemCount() Ends
 
@@ -257,4 +293,109 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> {
         dialog.setContentView(R.layout.lexicon_popup_view);
         dialog.show();
     }
+
+
+    @Override
+    public Filter getFilter() {
+        if(lexiconFilter == null){
+            lexiconFilter = new LexiconFilter();
+        }
+        return lexiconFilter;
+    }
+
+    public void changeContext(VIEW_CONTEXT context){
+        this.view_context = context;
+        notifyDataSetChanged();
+    }
+
+    /*********************************************************************************************
+     * This class filters the data and provide values that contains the search key
+     */
+    public class LexiconFilter extends Filter {
+
+        @Override
+        protected FilterResults performFiltering(CharSequence charSequence) {
+
+            FilterResults filteredResults = new FilterResults();
+
+
+            if(charSequence == null && charSequence.length() == 0){
+                return null;
+            }
+
+            ArrayList<Lexicon> filteredData = new ArrayList<>();
+
+            //
+            int pageIncrement = 100;
+
+            int startIndex = 1;
+            int endIndex = pageIncrement;
+
+            int MAX_INDEX = 1993; //Max number of lexicons for now
+
+            while(endIndex < MAX_INDEX){
+
+
+                for(Lexicon lexicon: lexDataSource.provideData(startIndex,endIndex)){
+
+                    if (lexicon == null) continue;
+
+                    if(lexicon.getEnglishWord().toLowerCase()
+                            .contains(charSequence.toString().toLowerCase())){
+
+                        System.out.println("Found searched word "+lexicon.getEnglishWord());
+
+                        filteredData.add(lexicon);
+
+                    }
+                }
+
+                if(endIndex < MAX_INDEX){
+                    startIndex = endIndex;
+                    endIndex = endIndex+pageIncrement;
+                }
+                if (endIndex == MAX_INDEX){
+                    endIndex++;
+                }
+
+                if (endIndex > MAX_INDEX){
+                    endIndex = MAX_INDEX;
+                    startIndex = endIndex -1;
+
+                    for(Lexicon lexicon: lexDataSource.provideData(startIndex,endIndex)){
+                        if(lexicon.getEnglishWord().toLowerCase()
+                                .contains(charSequence.toString().toLowerCase())){
+
+                            System.out.println("Found searched word "+lexicon.getEnglishWord());
+
+                            filteredData.add(lexicon);
+
+                        }
+                    }
+                    break;
+                }
+
+            }
+
+            endIndex = 0;
+            startIndex =0;
+
+            filteredResults.values = filteredData;
+            filteredResults.count = filteredData.size();
+
+
+            return filteredResults;
+        }
+
+        @Override
+        protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
+            listOfLexicon.clear();
+            listOfLexicon.addAll ( ( (ArrayList<Lexicon>) filterResults.values) );
+            Log.i("publishResults", "publishResults: Number of search results: "+listOfLexicon.size());
+            view_context = VIEW_CONTEXT.SEARCH_LIST;
+            notifyDataSetChanged();
+        }
+    }
+
+
 }//LexAdapter Ends

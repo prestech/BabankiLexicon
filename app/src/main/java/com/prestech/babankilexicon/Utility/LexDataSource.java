@@ -42,7 +42,7 @@ public class LexDataSource {
         }
 
         if(dataBufferList == null){
-            dataBufferList = Arrays.asList(new Lexicon[30]);
+           dataBufferList = Arrays.asList(new Lexicon[110]);
         }
 
         if(rootNode == null) {
@@ -61,7 +61,7 @@ public class LexDataSource {
     }
 
     public Lexicon getLexicon(String lexiconId){
-
+        Log.i("getLexicon", "getLexicon: lexiconId "+lexiconId);
         try {
             Lexicon lexicon = objectMapper.readValue(rootNode.path(lexiconId).toString(), Lexicon.class);
             return lexicon;
@@ -109,22 +109,20 @@ public class LexDataSource {
         return dataBufferList;
     }
 
-    public List<Lexicon> provideData(int startIndex, int displace){
+    public List<Lexicon> provideData(int startIndex, int endIndex){
 
         Lexicon lexicon;
         int listIndex;
         Log.d("PRESDEBUG", "START LOAD" + startIndex);
 
-        for(int lexIndex = startIndex+displace; lexIndex < (startIndex+displace)+30; lexIndex++) {
+        for(int lexIndex = startIndex; lexIndex < endIndex; lexIndex++) {
 
-            listIndex = (lexIndex%30);
+            listIndex = lexIndex%110;
 
             lexicon = getLexicon("" + lexIndex);
 
             if(lexicon != null){
                 dataBufferList.set(listIndex, lexicon);
-            }else{
-                dataBufferList.set(listIndex, null);
             }
 
 

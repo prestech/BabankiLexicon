@@ -43,7 +43,7 @@ public class FavFragment extends Fragment {
         recyclerView = view.findViewById(R.id.fav_recycler_View);
 
         recyclerView.setHasFixedSize(false);
-
+        setHasOptionsMenu(false);
         //set layout; linear layout
         layoutManager = new LinearLayoutManager(view.getContext());
         recyclerView.setLayoutManager(layoutManager);

@@ -19,7 +19,7 @@ public class HomeFragment extends Fragment {
         super.onCreateView(inflater, container, savedInstanceState);
 
         View view = inflater.inflate(R.layout.activity_home, container, false);
-
+        setHasOptionsMenu(false);
         return view;
     }
 
