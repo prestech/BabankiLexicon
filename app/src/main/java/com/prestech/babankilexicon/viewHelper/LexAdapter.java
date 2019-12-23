@@ -159,15 +159,37 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder>  
         Lexicon lexicon = null;
         String lexiconId;
         String tribalWord;
+        String favLexicon;
         int listIndex = 0;
 
 
         switch(view_context){
 
             case LEXICON_LIST:
-            case FAVORITE_LIST:
 
                 lexicon = lexDataSource.getLexicon("" + dataIndex);
+
+                if(lexicon != null) {
+                    lexiconId = lexicon.getLexiconId()+"";
+
+                    lexViewHolder.kjmTextView.setText(lexicon.getKejomWord());
+                    lexViewHolder.engTextView.setText(lexicon.getEnglishWord());
+
+
+                    if(FavLexManager.lexIsFavorite(lexiconId) == false){
+                        lexViewHolder.favBtn.setImageResource(android.R.drawable.btn_star_big_off);
+                    }else{
+                        lexViewHolder.favBtn.setImageResource(android.R.drawable.btn_star_big_on);
+                    }
+
+                    lexViewHolder.favBtn.setOnClickListener(new ClickListener(lexicon, dataIndex));
+                    lexViewHolder.audioBtn.setOnClickListener(new ClickListener(lexicon, dataIndex));
+                }
+                break;
+
+            case FAVORITE_LIST:
+
+                lexicon = lexDataSource.getLexicon(FavLexManager.getFavLexiconId(dataIndex));
 
                 if(lexicon != null) {
                     lexiconId = lexicon.getLexiconId()+"";
