@@ -1,106 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="300dp">
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
 
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+    <TextView
+        android:id="@+id/word"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:orientation="horizontal">
 
-            <android.support.v7.widget.CardView
+            <TextView
+                android:id="@+id/partOfSpeech"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content" />
 
-                <ImageView
-                    android:id="@+id/imageView"
-                    android:layout_width="150dp"
-                    android:layout_height="158dp"
-                    android:layout_marginRight="2dp"
-                    android:layout_marginBottom="2dp"
-                    app:srcCompat="@android:drawable/sym_def_app_icon" />
-
-            </android.support.v7.widget.CardView>
-
-            <android.support.v7.widget.CardView
+            <TextView
+                android:id="@+id/pronunciation"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="2dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/textView3"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="TextView" />
-
-                    <TextView
-                        android:id="@+id/textView4"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="TextView" />
-                </LinearLayout>
-
-            </android.support.v7.widget.CardView>
-
+                android:layout_height="wrap_content"/>
         </LinearLayout>
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/translation"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_height="match_parent" />
 
-            <android.support.v7.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginBottom="3dp">
+        <TextView
+            android:id="@+id/examples"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
-                <TextView
-                    android:id="@+id/textView8"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:text="TextView" />
-            </android.support.v7.widget.CardView>
+    <android.support.v7.widget.CardView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
 
-            <android.support.v7.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="3dp">
-
-                <TextView
-                    android:id="@+id/textView9"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:text="TextView" />
-            </android.support.v7.widget.CardView>
-
-            <android.support.v7.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="3dp">
-
-                <TextView
-                    android:id="@+id/textView5"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:text="TextView" />
-            </android.support.v7.widget.CardView>
-
-        </LinearLayout>
-
-    </LinearLayout>
-
-</RelativeLayout>
+        <ImageView
+            android:id="@+id/image"
+            android:layout_width="150dp"
+            android:layout_height="158dp"
+            android:layout_marginEnd="2dp"
+            android:layout_marginBottom="2dp"
+            app:srcCompat="@android:drawable/sym_def_app_icon"
+            android:contentDescription="@string/cd_word_image" />
+    </android.support.v7.widget.CardView>
+</LinearLayout>
