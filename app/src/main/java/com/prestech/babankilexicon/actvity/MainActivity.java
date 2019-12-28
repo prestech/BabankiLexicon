@@ -41,13 +41,13 @@ public class MainActivity extends AppCompatActivity implements AlphabetFragment.
                     fragTransaction.replace(R.id.fragment_container, homeFragment);
                     fragTransaction.commit();
                     return true;
-                case R.id.navigation_dashboard:
+                case R.id.navigation_lexicon:
                     mainLexiconFragment = new MainLexiconListFragment();
                     fragTransaction = fragmentManager.beginTransaction();
                     fragTransaction.replace(R.id.fragment_container, mainLexiconFragment, Constants.FragmentTags.mainFragment);
                     fragTransaction.commit();
                     return true;
-                case R.id.navigation_notifications:
+                case R.id.navigation_favorite:
                     favFragment = new FavFragment();
                     fragTransaction = fragmentManager.beginTransaction();
                     fragTransaction.replace(R.id.fragment_container, favFragment);
