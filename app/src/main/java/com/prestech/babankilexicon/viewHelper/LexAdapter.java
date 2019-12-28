@@ -3,6 +3,7 @@ package com.prestech.babankilexicon.viewHelper;
 import android.app.Dialog;
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -11,21 +12,21 @@ import android.view.ViewGroup;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ImageButton;
-import android.widget.TabHost;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.prestech.babankilexicon.R;
 import com.prestech.babankilexicon.Utility.AudioManager;
+import com.prestech.babankilexicon.Utility.DetailAnimation;
 import com.prestech.babankilexicon.Utility.FavLexManager;
 import com.prestech.babankilexicon.Utility.LexDataSource;
 import com.prestech.babankilexicon.actvity.AlphabetFragment;
 import com.prestech.babankilexicon.model.Lexicon;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
-public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder>  implements Filterable {
+public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> implements Filterable {
     private static String TAG = "PRESDEBUG";
     private ArrayList<Lexicon> listOfLexicon;
     private LexDataSource lexDataSource;
@@ -33,28 +34,43 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder>  
     private AudioManager audioManager;
     private AlphabetFragment.OnCharIndexSelectListener onCharIndexSelectListener;
     private LexiconFilter lexiconFilter;
+    private LinearLayout lastToggled = null;
+    private CardView lastRoot = null;
 
-    private final String[] alphabets = {"A" , "B" , "Bv" , "Ch" , "D" , "Dz" , "E" , "Ə" , "F" , "G" , "Gh" , "I" , "Ɨ" , "J" , "ʼ" , "K" , "L" , "M" , "N" , "Ny" , "Ŋ" , "O" , "Pf" , "S" , "Sh" , "T" , "Ts" , "U" , "Ʉ" , "V" , "W" , "Y" , "Z" , "Zh"};
+    private final String[] alphabets = {"A", "B", "Bv", "Ch", "D", "Dz", "E", "Ə", "F", "G", "Gh", "I", "Ɨ", "J", "ʼ", "K", "L", "M", "N", "Ny", "Ŋ", "O", "Pf", "S", "Sh", "T", "Ts", "U", "Ʉ", "V", "W", "Y", "Z", "Zh"};
 
 
-    public enum VIEW_CONTEXT  {FAVORITE_LIST, LEXICON_LIST, ALPHABET_LIST,SEARCH_LIST};
+    public enum VIEW_CONTEXT {FAVORITE_LIST, LEXICON_LIST, ALPHABET_LIST, SEARCH_LIST}
+
 
     public class LexViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         TextView engTextView, kjmTextView, alphabetTv;
+        TextView partOfSpeechTv, pronTv, examplesTv;
+        ImageView pictureIv;
+
         ImageButton favBtn, audioBtn;
+        LinearLayout lexiconDetails;
+        CardView root;
 
-        LexViewHolder(View view, VIEW_CONTEXT view_context){
+        LexViewHolder(View view, VIEW_CONTEXT view_context) {
             super(view);
+            root = (CardView) view;
+            lexiconDetails = view.findViewById(R.id.lexicon_details);
 
-            switch (view_context){
+            switch (view_context) {
                 case LEXICON_LIST:
                 case SEARCH_LIST:
                 case FAVORITE_LIST:
+                    view.setOnClickListener(this);
+
                     engTextView = view.findViewById(R.id.eng_textview);
                     kjmTextView = view.findViewById(R.id.kjm_textview);
+                    partOfSpeechTv = view.findViewById(R.id.partOfSpeech);
+                    pronTv = view.findViewById(R.id.pronunciation);
+                    examplesTv = view.findViewById(R.id.examples);
                     favBtn = view.findViewById(R.id.favBtn);
                     audioBtn = view.findViewById(R.id.adioBtn);
-                    view.setOnClickListener(this);
+                    pictureIv = view.findViewById(R.id.word_picture);
                     break;
                 case ALPHABET_LIST:
                     alphabetTv = view.findViewById(R.id.alpabet_textview);
@@ -64,26 +80,47 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder>  
 
         @Override
         public void onClick(View view) {
-            showDialog(view.getContext(), GetLexiconItem(getAdapterPosition()));
+            boolean previouslyExpanded = lexiconDetails.getVisibility() != View.GONE;
+
+            if (lastToggled != null) {
+                toggleLayoutExpand(true, lastToggled, lastRoot);
+                if (lastToggled == lexiconDetails) {
+                    lastToggled = null;
+                    lastRoot = null;
+                }
+                else {
+                    toggleLayoutExpand(false, lexiconDetails, root);
+                    lastToggled = lexiconDetails;
+                    lastRoot = root;
+                }
+            } else {
+                toggleLayoutExpand(previouslyExpanded, lexiconDetails, root);
+                lastToggled = lexiconDetails;
+                lastRoot = root;
+                if (previouslyExpanded) {
+                    lastToggled = null;
+                    lastRoot = null;
+                }
+            }
         }
     }//LexViewHolder Ends
 
-    public LexAdapter(Context context, VIEW_CONTEXT view_context){
+    public LexAdapter(Context context, VIEW_CONTEXT view_context) {
         this.lexDataSource = new LexDataSource(context);
         this.view_context = view_context;
 
-        if(audioManager == null){
+        if (audioManager == null) {
             audioManager = new AudioManager(context);
         }
 
-        if(listOfLexicon == null){
+        if (listOfLexicon == null) {
             listOfLexicon = new ArrayList<>();
         }
 
         //lexDataSet =  lexDataSource.loadInitialData();
     }
 
-    public  LexAdapter(Context context, VIEW_CONTEXT view_context, AlphabetFragment.OnCharIndexSelectListener listener){
+    public LexAdapter(Context context, VIEW_CONTEXT view_context, AlphabetFragment.OnCharIndexSelectListener listener) {
         this(context, view_context);
         this.onCharIndexSelectListener = listener;
     }
@@ -99,7 +136,7 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder>  
         View view = null;
         LexViewHolder lexViewHolder = null;
 
-        switch (view_context){
+        switch (view_context) {
             case LEXICON_LIST:
             case FAVORITE_LIST:
             case SEARCH_LIST:
@@ -111,21 +148,21 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder>  
                 view.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        if(onCharIndexSelectListener != null) {
-                            TextView textView = (TextView)view.findViewById(R.id.alpabet_textview);
+                        if (onCharIndexSelectListener != null) {
+                            TextView textView = (TextView) view.findViewById(R.id.alpabet_textview);
                             String value = textView.getText().toString();
 
                             int alpaIndex = lexDataSource.findAlphaIndex(value);
-                            if(alpaIndex == -1){
+                            if (alpaIndex == -1) {
                                 return;
                             }
-                            alpaIndex = alpaIndex+7;
+                            alpaIndex = alpaIndex + 7;
 
-                            System.out.println("Alphabet index: "+alpaIndex);
+                            System.out.println("Alphabet index: " + alpaIndex);
 
                             onCharIndexSelectListener.retrieveSelectedIndex(alpaIndex);
 
-                        }else{
+                        } else {
                             Log.i("LEXICON_LOG", "onCharIndexSelectListener is null");
                         }
                     }
@@ -135,8 +172,8 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder>  
         }
 
         if (view != null) {
-             lexViewHolder = new LexViewHolder(view, view_context);
-        }else {
+            lexViewHolder = new LexViewHolder(view, view_context);
+        } else {
             //throw exception
             new Exception("View is null");
         }
@@ -151,7 +188,7 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder>  
         String lexiconId;
 
         if (view_context == VIEW_CONTEXT.ALPHABET_LIST) {
-            Log.i("LEXICON_LOG", "Setting alphabet char index value "+alphabets[dataIndex]);
+            Log.i("LEXICON_LOG", "Setting alphabet char index value " + alphabets[dataIndex]);
             lexViewHolder.alphabetTv.setText(alphabets[dataIndex]);
             return;
         }
@@ -161,15 +198,37 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder>  
         lexViewHolder.kjmTextView.setText(lexicon.getKejomWord());
         lexViewHolder.engTextView.setText(lexicon.getEnglishWord());
 
-        if(!FavLexManager.lexIsFavorite(lexiconId))
-            lexViewHolder.favBtn.setImageResource(android.R.drawable.btn_star_big_off);
-        else
-            lexViewHolder.favBtn.setImageResource(android.R.drawable.btn_star_big_on);
+        lexViewHolder.partOfSpeechTv.setText(lexicon.getPartOfSpeech());
+        lexViewHolder.pronTv.setText(lexicon.getPronunciation());
+        lexViewHolder.examplesTv.setText(lexicon.getExamplePhrase());
+        // TODO add image link to data model, fetch and display
+        if (dataIndex % 3 == 0) lexViewHolder.pictureIv.setVisibility(View.GONE);
+//        lexViewHolder.pictureIv.setImageDrawable();
 
+        if (!FavLexManager.lexIsFavorite(lexiconId))
+            lexViewHolder.favBtn.setImageResource(R.drawable.ic_star);
+        else
+            lexViewHolder.favBtn.setImageResource(R.drawable.ic_star_orange);
 
         lexViewHolder.favBtn.setOnClickListener(new ClickListener(lexicon, dataIndex));
         lexViewHolder.audioBtn.setOnClickListener(new ClickListener(lexicon, dataIndex));
     }//onBindViewHolder() Ends
+
+    /**
+     * Toggles a card view between displaying and not displaying the details
+     * @param isExpanded is card view currently expanded?
+     * @param layoutToToggle Layout to toggle
+     * @param root Root card to add or remove elevation
+     */
+    private void toggleLayoutExpand(boolean isExpanded, LinearLayout layoutToToggle, CardView root) {
+        if (isExpanded) {
+            root.setCardElevation(0);
+            DetailAnimation.collapse(layoutToToggle);
+        } else {
+            root.setCardElevation(10);
+            DetailAnimation.expand(layoutToToggle);
+        }
+    }
 
     @Override
     public void onViewRecycled(@NonNull LexViewHolder holder) {
@@ -179,7 +238,7 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder>  
     @Override
     //TODO:Make the list an Endless list in the future
     public int getItemCount() {
-        switch (view_context){
+        switch (view_context) {
             case FAVORITE_LIST:
                 return FavLexManager.getFavListSize();
             case ALPHABET_LIST:
@@ -188,16 +247,18 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder>  
                 return 1993;
             case SEARCH_LIST:
                 return listOfLexicon.size();
-            default: return  0;
+            default:
+                return 0;
         }
     }//getItemCount() Ends
 
     /**
      * Get the lexicon item from the appropriate data source
+     *
      * @param dataIndex Index of the data in the data source
      * @return the matching lexicon item.
      */
-    private Lexicon GetLexiconItem(int dataIndex){
+    private Lexicon GetLexiconItem(int dataIndex) {
         switch (view_context) {
             case FAVORITE_LIST:
                 return lexDataSource.getLexicon(FavLexManager.getFavLexiconId((dataIndex)));
@@ -207,45 +268,45 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder>  
                 return listOfLexicon.get(dataIndex);
             case ALPHABET_LIST:
             default:
-                return  new Lexicon();
+                return new Lexicon();
         }
     }
 
-    private class ClickListener implements View.OnClickListener{
+    private class ClickListener implements View.OnClickListener {
         private String lexiconId;
         private int indexOfData;
         private Lexicon lexicon;
 
 
-        ClickListener(Lexicon lexicon, int indexOfData){
-            this.lexiconId = lexicon.getLexiconId()+"";
+        ClickListener(Lexicon lexicon, int indexOfData) {
+            this.lexiconId = lexicon.getLexiconId() + "";
             this.lexicon = lexicon;
             this.indexOfData = indexOfData;
         }
 
-        private void replaceFavBtnImage(ImageButton favBtn, int indexOfData){
+        private void replaceFavBtnImage(ImageButton favBtn, int indexOfData) {
 
-            if(FavLexManager.lexIsFavorite(lexiconId)){
+            if (FavLexManager.lexIsFavorite(lexiconId)) {
                 FavLexManager.removeFromFavList(lexiconId);
-                favBtn.setImageResource(android.R.drawable.btn_star_big_off);
-            }else {
+                favBtn.setImageResource(R.drawable.ic_star);
+            } else {
                 FavLexManager.addToFavList(lexiconId);
-                favBtn.setImageResource(android.R.drawable.btn_star_big_on);
+                favBtn.setImageResource(R.drawable.ic_star_orange);
             }
 
-            if(view_context == VIEW_CONTEXT.FAVORITE_LIST){
+            if (view_context == VIEW_CONTEXT.FAVORITE_LIST) {
                 notifyItemRemoved(indexOfData);
             }
         }
 
         @Override
         public void onClick(View v) {
-            switch (v.getId()){
+            switch (v.getId()) {
                 case R.id.favBtn:
-                    replaceFavBtnImage( (ImageButton) v, indexOfData);
+                    replaceFavBtnImage((ImageButton) v, indexOfData);
                     break;
                 case R.id.adioBtn:
-                    if(lexicon != null) {
+                    if (lexicon != null) {
                         Log.d(TAG, lexicon.getKejomWord() + " Audio Btn clicked" + v.getId());
                         audioManager.playAudio(lexicon.getKejomWord());
                     }
@@ -254,42 +315,15 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder>  
         }//onClick Ends
     }//ClickListener Ends
 
-    private void showDialog(Context context, Lexicon lexicon){
-        Dialog dialog = new Dialog(context);
-        dialog.setContentView(R.layout.lexicon_popup_view);
-
-        setupDialog(dialog, lexicon);
-        dialog.show();
-    }
-
-    /**
-     * Bind data to the dialog view
-     * @param dialog Created dialog
-     * @param lexicon Lexicon data to bind to dialog
-     */
-    private void setupDialog(Dialog dialog, Lexicon lexicon) {
-        //TODO enhance dialog
-        TextView tv = dialog.findViewById(R.id.word);
-        tv.setText(lexicon.getKejomWord());
-        tv = dialog.findViewById(R.id.translation);
-        tv.setText(lexicon.getEnglishWord());
-        tv = dialog.findViewById(R.id.partOfSpeech);
-        tv.setText(lexicon.getPartOfSpeech());
-        tv = dialog.findViewById(R.id.pronunciation);
-        tv.setText(lexicon.getPronunciation());
-        tv = dialog.findViewById(R.id.examples);
-        tv.setText(lexicon.getExamplePhrase());
-    }
-
     @Override
     public Filter getFilter() {
-        if(lexiconFilter == null){
+        if (lexiconFilter == null) {
             lexiconFilter = new LexiconFilter();
         }
         return lexiconFilter;
     }
 
-    public void changeContext(VIEW_CONTEXT context){
+    public void changeContext(VIEW_CONTEXT context) {
         this.view_context = context;
         notifyDataSetChanged();
     }
@@ -305,7 +339,7 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder>  
             FilterResults filteredResults = new FilterResults();
 
 
-            if(charSequence == null && charSequence.length() == 0){
+            if (charSequence == null && charSequence.length() == 0) {
                 return null;
             }
 
@@ -319,40 +353,40 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder>  
 
             int MAX_INDEX = 1993; //Max number of lexicons for now
 
-            while(endIndex < MAX_INDEX){
+            while (endIndex < MAX_INDEX) {
 
 
-                for(Lexicon lexicon: lexDataSource.provideData(startIndex,endIndex)){
+                for (Lexicon lexicon : lexDataSource.provideData(startIndex, endIndex)) {
 
                     if (lexicon == null) continue;
 
-                    if(lexicon.getEnglishWord().toLowerCase()
-                            .contains(charSequence.toString().toLowerCase())){
+                    if (lexicon.getEnglishWord().toLowerCase()
+                            .contains(charSequence.toString().toLowerCase())) {
 
-                        System.out.println("Found searched word "+lexicon.getEnglishWord());
+                        System.out.println("Found searched word " + lexicon.getEnglishWord());
 
                         filteredData.add(lexicon);
 
                     }
                 }
 
-                if(endIndex < MAX_INDEX){
+                if (endIndex < MAX_INDEX) {
                     startIndex = endIndex;
-                    endIndex = endIndex+pageIncrement;
+                    endIndex = endIndex + pageIncrement;
                 }
-                if (endIndex == MAX_INDEX){
+                if (endIndex == MAX_INDEX) {
                     endIndex++;
                 }
 
-                if (endIndex > MAX_INDEX){
+                if (endIndex > MAX_INDEX) {
                     endIndex = MAX_INDEX;
-                    startIndex = endIndex -1;
+                    startIndex = endIndex - 1;
 
-                    for(Lexicon lexicon: lexDataSource.provideData(startIndex,endIndex)){
-                        if(lexicon.getEnglishWord().toLowerCase()
-                                .contains(charSequence.toString().toLowerCase())){
+                    for (Lexicon lexicon : lexDataSource.provideData(startIndex, endIndex)) {
+                        if (lexicon.getEnglishWord().toLowerCase()
+                                .contains(charSequence.toString().toLowerCase())) {
 
-                            System.out.println("Found searched word "+lexicon.getEnglishWord());
+                            System.out.println("Found searched word " + lexicon.getEnglishWord());
 
                             filteredData.add(lexicon);
 
@@ -364,7 +398,7 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder>  
             }
 
             endIndex = 0;
-            startIndex =0;
+            startIndex = 0;
 
             filteredResults.values = filteredData;
             filteredResults.count = filteredData.size();
@@ -376,8 +410,8 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder>  
         @Override
         protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
             listOfLexicon.clear();
-            listOfLexicon.addAll ( ( (ArrayList<Lexicon>) filterResults.values) );
-            Log.i("publishResults", "publishResults: Number of search results: "+listOfLexicon.size());
+            listOfLexicon.addAll(((ArrayList<Lexicon>) filterResults.values));
+            Log.i("publishResults", "publishResults: Number of search results: " + listOfLexicon.size());
             view_context = VIEW_CONTEXT.SEARCH_LIST;
             notifyDataSetChanged();
         }

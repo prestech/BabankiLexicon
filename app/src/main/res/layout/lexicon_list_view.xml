@@ -6,9 +6,11 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="2dp"
+    android:layout_marginEnd="20dp"
+    android:background="#2111"
     android:orientation="vertical"
-    android:background="#2111" >
-
+    app:cardCornerRadius="8dp"
+    app:cardElevation="0dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -25,16 +27,23 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentTop="true"
-                android:layout_marginEnd="33dp"
+                android:layout_marginTop="@dimen/icon_marginTop"
+                android:layout_marginEnd="@dimen/icon_marginEnd"
                 android:layout_toStartOf="@+id/favBtn"
-                app:srcCompat="@android:drawable/ic_lock_silent_mode_off" />
+                android:background="#00000000"
+                android:contentDescription="@string/cd_audio"
+                android:src="@drawable/ic_audio" />
 
             <ImageButton
                 android:id="@+id/favBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
-                app:srcCompat="@android:drawable/btn_star" />
+                android:layout_marginTop="@dimen/icon_marginTop"
+                android:layout_marginEnd="@dimen/icon_marginEnd"
+                android:background="#00000000"
+                android:contentDescription="@string/cd_favorite"
+                android:src="@drawable/ic_star" />
 
             <TextView
                 android:id="@+id/kjm_textview"
@@ -42,7 +51,7 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
-                android:layout_marginStart="11dp"
+                android:layout_marginStart="@dimen/lex_icon_margin_start"
                 android:text="TextView"
                 android:textAppearance="@style/TextAppearance.AppCompat.Large"
                 tools:text="Kejom Word" />
@@ -60,10 +69,67 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
                 android:layout_alignParentTop="true"
-                android:layout_marginStart="11dp"
+                android:layout_marginStart="@dimen/lex_icon_margin_start"
                 android:layout_marginTop="12dp"
                 android:text="English" />
         </RelativeLayout>
-    </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/lexicon_details"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <View
+                android:id="@+id/details_divider"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="?android:attr/dividerVertical" />
+
+            <TextView
+                android:id="@+id/word"
+
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/lex_icon_margin_start" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/partOfSpeech"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+                <TextView
+                    android:id="@+id/pronunciation"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/translation"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="@dimen/lex_icon_margin_start" />
+
+            <TextView
+                android:id="@+id/examples"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="@dimen/lex_icon_margin_start" />
+
+            <ImageView
+                android:id="@+id/word_picture"
+                android:layout_width="128dp"
+                android:layout_height="128dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_margin="2dp"
+                android:contentDescription="@string/cd_word_image"
+                app:srcCompat="@android:drawable/sym_def_app_icon" />
+        </LinearLayout>
+    </LinearLayout>
 </android.support.v7.widget.CardView>

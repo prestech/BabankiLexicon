@@ -11,6 +11,7 @@
         android:layout_height="match_parent"
         android:scrollbars="vertical"
         android:scrollbarSize="12dp"
+        android:padding="4dp"
         android:scrollbarAlwaysDrawHorizontalTrack="true"
         android:verticalScrollbarPosition="right"
         android:scrollbarStyle="insideOverlay"

@@ -5,4 +5,6 @@
     <string name="title_notifications">Notifications</string>
     <string name="title_activity_search">SearchActivity</string>
     <string name="cd_word_image">Word image</string>
+    <string name="cd_favorite">Favorite</string>
+    <string name="cd_audio">Audio</string>
 </resources>
