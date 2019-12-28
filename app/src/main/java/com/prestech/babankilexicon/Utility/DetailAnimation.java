@@ -29,6 +29,8 @@ public class DetailAnimation {
 
         animation.setDuration((long) (actualHeight /
                 view.getContext().getResources().getDisplayMetrics().density));
+
+        view.setVisibility((View.VISIBLE));
         view.startAnimation(animation);
         Log.d(TAG, "expanded detail");
     }

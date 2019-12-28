@@ -15,12 +15,12 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginStart="4dp"
         android:orientation="vertical">
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#ffffff">
+            android:layout_height="match_parent">
 
             <ImageButton
                 android:id="@+id/adioBtn"
@@ -30,7 +30,7 @@
                 android:layout_marginTop="@dimen/icon_marginTop"
                 android:layout_marginEnd="@dimen/icon_marginEnd"
                 android:layout_toStartOf="@+id/favBtn"
-                android:background="#00000000"
+                android:background="@color/transparent"
                 android:contentDescription="@string/cd_audio"
                 android:src="@drawable/ic_audio" />
 
@@ -51,28 +51,17 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
-                android:layout_marginStart="@dimen/lex_icon_margin_start"
                 android:text="TextView"
                 android:textAppearance="@style/TextAppearance.AppCompat.Large"
                 tools:text="Kejom Word" />
         </RelativeLayout>
 
-        <RelativeLayout
+        <TextView
+            android:id="@+id/eng_textview"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#ffffff"
-            android:gravity="top">
-
-            <TextView
-                android:id="@+id/eng_textview"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
-                android:layout_alignParentTop="true"
-                android:layout_marginStart="@dimen/lex_icon_margin_start"
-                android:layout_marginTop="12dp"
-                android:text="English" />
-        </RelativeLayout>
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="English" />
 
         <LinearLayout
             android:id="@+id/lexicon_details"
@@ -85,42 +74,38 @@
                 android:id="@+id/details_divider"
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
+                android:layout_margin="4dp"
                 android:background="?android:attr/dividerVertical" />
 
-            <TextView
-                android:id="@+id/word"
-
-                android:layout_width="wrap_content"
+            <com.prestech.babankilexicon.Utility.LabeledTextView
+                android:id="@+id/ltv_part_of_speech"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/lex_icon_margin_start" />
+                app:labelText="Part of Speech" />
 
-            <LinearLayout
+            <com.prestech.babankilexicon.Utility.LabeledTextView
+                android:id="@+id/ltv_pronunciation"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="horizontal">
+                android:layout_height="wrap_content"
+                app:labelText="Pronunciation" />
 
-                <TextView
-                    android:id="@+id/partOfSpeech"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-
-                <TextView
-                    android:id="@+id/pronunciation"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/translation"
+            <com.prestech.babankilexicon.Utility.LabeledTextView
+                android:id="@+id/ltv_examples"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginStart="@dimen/lex_icon_margin_start" />
+                android:layout_height="wrap_content"
+                app:labelText="Example(s)" />
 
-            <TextView
-                android:id="@+id/examples"
+            <com.prestech.babankilexicon.Utility.LabeledTextView
+                android:id="@+id/ltv_variants"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginStart="@dimen/lex_icon_margin_start" />
+                android:layout_height="wrap_content"
+                app:labelText="Variation(s)" />
+
+            <com.prestech.babankilexicon.Utility.LabeledTextView
+                android:id="@+id/ltv_plural"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:labelText="Plural" />
 
             <ImageView
                 android:id="@+id/word_picture"
@@ -131,5 +116,7 @@
                 android:contentDescription="@string/cd_word_image"
                 app:srcCompat="@android:drawable/sym_def_app_icon" />
         </LinearLayout>
+
     </LinearLayout>
+
 </android.support.v7.widget.CardView>

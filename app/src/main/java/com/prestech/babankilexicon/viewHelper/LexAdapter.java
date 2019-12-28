@@ -1,6 +1,5 @@
 package com.prestech.babankilexicon.viewHelper;
 
-import android.app.Dialog;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.CardView;
@@ -20,6 +19,7 @@ import com.prestech.babankilexicon.R;
 import com.prestech.babankilexicon.Utility.AudioManager;
 import com.prestech.babankilexicon.Utility.DetailAnimation;
 import com.prestech.babankilexicon.Utility.FavLexManager;
+import com.prestech.babankilexicon.Utility.LabeledTextView;
 import com.prestech.babankilexicon.Utility.LexDataSource;
 import com.prestech.babankilexicon.actvity.AlphabetFragment;
 import com.prestech.babankilexicon.model.Lexicon;
@@ -45,8 +45,8 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
 
     public class LexViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         TextView engTextView, kjmTextView, alphabetTv;
-        TextView partOfSpeechTv, pronTv, examplesTv;
         ImageView pictureIv;
+        LabeledTextView pronLtv, examplesLtv, partOfSpeechLtv, pluralLtv, variationLtv;
 
         ImageButton favBtn, audioBtn;
         LinearLayout lexiconDetails;
@@ -65,9 +65,13 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
 
                     engTextView = view.findViewById(R.id.eng_textview);
                     kjmTextView = view.findViewById(R.id.kjm_textview);
-                    partOfSpeechTv = view.findViewById(R.id.partOfSpeech);
-                    pronTv = view.findViewById(R.id.pronunciation);
-                    examplesTv = view.findViewById(R.id.examples);
+
+                    partOfSpeechLtv = view.findViewById(R.id.ltv_part_of_speech);
+                    pronLtv = view.findViewById(R.id.ltv_pronunciation);
+                    examplesLtv = view.findViewById(R.id.ltv_examples);
+                    pluralLtv = view.findViewById(R.id.ltv_plural);
+                    variationLtv = view.findViewById(R.id.ltv_variants);
+
                     favBtn = view.findViewById(R.id.favBtn);
                     audioBtn = view.findViewById(R.id.adioBtn);
                     pictureIv = view.findViewById(R.id.word_picture);
@@ -87,8 +91,7 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
                 if (lastToggled == lexiconDetails) {
                     lastToggled = null;
                     lastRoot = null;
-                }
-                else {
+                } else {
                     toggleLayoutExpand(false, lexiconDetails, root);
                     lastToggled = lexiconDetails;
                     lastRoot = root;
@@ -198,9 +201,13 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
         lexViewHolder.kjmTextView.setText(lexicon.getKejomWord());
         lexViewHolder.engTextView.setText(lexicon.getEnglishWord());
 
-        lexViewHolder.partOfSpeechTv.setText(lexicon.getPartOfSpeech());
-        lexViewHolder.pronTv.setText(lexicon.getPronunciation());
-        lexViewHolder.examplesTv.setText(lexicon.getExamplePhrase());
+            lexViewHolder.partOfSpeechLtv.setValueText(lexicon.getPartOfSpeech());
+            lexViewHolder.pronLtv.setValueText(lexicon.getPronunciation());
+            lexViewHolder.examplesLtv.setValueText(lexicon.getExamplePhrase());
+            lexViewHolder.variationLtv.setValueText(lexicon.getVariant());
+            lexViewHolder.pluralLtv.setValueText(lexicon.getPluralForm());
+
+
         // TODO add image link to data model, fetch and display
         if (dataIndex % 3 == 0) lexViewHolder.pictureIv.setVisibility(View.GONE);
 //        lexViewHolder.pictureIv.setImageDrawable();
@@ -216,9 +223,10 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
 
     /**
      * Toggles a card view between displaying and not displaying the details
-     * @param isExpanded is card view currently expanded?
+     *
+     * @param isExpanded     is card view currently expanded?
      * @param layoutToToggle Layout to toggle
-     * @param root Root card to add or remove elevation
+     * @param root           Root card to add or remove elevation
      */
     private void toggleLayoutExpand(boolean isExpanded, LinearLayout layoutToToggle, CardView root) {
         if (isExpanded) {
