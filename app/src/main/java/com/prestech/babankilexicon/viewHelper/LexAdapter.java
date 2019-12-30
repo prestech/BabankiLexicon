@@ -21,7 +21,7 @@ import com.prestech.babankilexicon.Utility.DetailAnimation;
 import com.prestech.babankilexicon.Utility.FavLexManager;
 import com.prestech.babankilexicon.Utility.LabeledTextView;
 import com.prestech.babankilexicon.Utility.LexDataSource;
-import com.prestech.babankilexicon.activity.AlphabetFragment;
+import com.prestech.babankilexicon.actvity.AlphabetFragment;
 import com.prestech.babankilexicon.model.Lexicon;
 
 import java.util.ArrayList;

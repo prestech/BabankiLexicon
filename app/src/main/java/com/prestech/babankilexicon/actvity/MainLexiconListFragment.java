@@ -1,4 +1,4 @@
-package com.prestech.babankilexicon.activity;
+package com.prestech.babankilexicon.actvity;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
