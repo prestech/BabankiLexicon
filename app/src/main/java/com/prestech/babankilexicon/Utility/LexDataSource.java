@@ -49,6 +49,7 @@ public class LexDataSource {
 
             try(InputStream inputStream = context.getResources().openRawResource(R.raw.kejomlexicon)) {
                rootNode = objectMapper.readTree(inputStream);
+
             } catch (IOException e) {
                 e.printStackTrace();
             }

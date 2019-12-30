@@ -7,13 +7,13 @@
 
     <fragment
         android:id="@+id/alphabet_frag"
-        android:name="com.prestech.babankilexicon.actvity.AlphabetFragment"
+        android:name="com.prestech.babankilexicon.activity.AlphabetFragment"
         android:layout_width="45dp"
         android:layout_height="match_parent" />
 
     <fragment
         android:id="@+id/lexicon_frag"
-        android:name="com.prestech.babankilexicon.actvity.LexiconFragment"
+        android:name="com.prestech.babankilexicon.activity.LexiconFragment"
         android:layout_width="390dp"
         android:layout_height="match_parent"
         android:layout_toRightOf="@id/alphabet_frag"/>

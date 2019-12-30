@@ -1,7 +1,5 @@
-package com.prestech.babankilexicon.actvity;
+package com.prestech.babankilexicon.activity;
 
-import android.app.SearchManager;
-import android.content.Context;
 import android.os.Bundle;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
@@ -12,9 +10,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.widget.SearchView;
 
 import com.prestech.babankilexicon.R;
 import com.prestech.babankilexicon.Utility.Constants;
