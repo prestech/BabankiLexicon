@@ -18,7 +18,7 @@ public class FavLexManager {
 
     public static void initializeManager(Context ctx){
         context = ctx;
-        file = new File(context.getFilesDir()+"/favLexicon.json");
+        file = new File(context.getFilesDir()+"/favlexicon.json");
         favLexIsAltered = false;
         readFavListFromFile();
     }

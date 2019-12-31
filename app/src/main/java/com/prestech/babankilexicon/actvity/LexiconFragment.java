@@ -2,11 +2,13 @@ package com.prestech.babankilexicon.actvity;
 
 import android.app.SearchManager;
 import android.content.Context;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.os.Bundle;
-import android.support.v4.app.FragmentTransaction;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -18,18 +20,27 @@ import android.view.ViewGroup;
 import android.widget.SearchView;
 import android.widget.TextView;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prestech.babankilexicon.R;
 import com.prestech.babankilexicon.Utility.Constants;
+import com.prestech.babankilexicon.model.Lexicon;
 import com.prestech.babankilexicon.viewHelper.LexAdapter;
 
-public class LexiconFragment extends Fragment  {
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
+public class LexiconFragment extends Fragment implements LoaderManager.LoaderCallbacks<List<Lexicon>> {
+    private final String TAG = "LexiconFragment";
     private RecyclerView recyclerView;
-    private RecyclerView.Adapter mAdapter;
+    private LexAdapter mAdapter;
     private RecyclerView.LayoutManager layoutManager;
 
-    private String [] lexData =new String[100];
-    private static String logTag = Constants.Logs.logTag+":"+AlphabetFragment.class.getName();
+    private String[] lexData = new String[100];
+    private static String logTag = Constants.Logs.logTag + ":" + AlphabetFragment.class.getName();
     private int scrollIndex = 0;
 
     @Nullable
@@ -54,6 +65,23 @@ public class LexiconFragment extends Fragment  {
         return view;
     }
 
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        Log.d(TAG, "onActivityCreated");
+        getLoaderManager().initLoader(0, null, this);
+        loadData();
+
+        super.onActivityCreated(savedInstanceState);
+    }
+
+    private void loadData() {
+        LoaderManager loaderManager = getLoaderManager();
+        Loader<List<Lexicon>> loader = loaderManager.getLoader(0);
+        if (loader == null)
+            loaderManager.initLoader(0, null, this);
+        else
+            loaderManager.restartLoader(0, null, this);
+    }
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -61,7 +89,7 @@ public class LexiconFragment extends Fragment  {
         inflater.inflate(R.menu.options_menu, menu);
         super.onCreateOptionsMenu(menu, inflater);
 
-        String mlogTag = logTag+":onAttachFragment";
+        String mlogTag = logTag + ":onAttachFragment";
 
         // Get the SearchView and set the searchable configuration
         SearchManager searchManager = (SearchManager) getActivity().getSystemService(Context.SEARCH_SERVICE);
@@ -76,9 +104,9 @@ public class LexiconFragment extends Fragment  {
             @Override
             public boolean onQueryTextSubmit(String query) {
 
-                Log.i(logTag, "Search query: "+query);
+                Log.i(logTag, "Search query: " + query);
                 //Call a DataSource Function to get a list of the result.
-                ((LexAdapter)mAdapter).getFilter().filter(query);
+                ((LexAdapter) mAdapter).getFilter().filter(query);
 
                 return true;
 
@@ -87,8 +115,8 @@ public class LexiconFragment extends Fragment  {
             @Override
             public boolean onQueryTextChange(String newText) {
 
-                if( newText == null ||newText.trim().equals("") ){
-                    ((LexAdapter)mAdapter).changeContext( LexAdapter.VIEW_CONTEXT.LEXICON_LIST);
+                if (newText == null || newText.trim().equals("")) {
+                    ((LexAdapter) mAdapter).changeContext(LexAdapter.VIEW_CONTEXT.LEXICON_LIST);
                     return true;
                 }
                 return false;
@@ -100,7 +128,7 @@ public class LexiconFragment extends Fragment  {
             @Override
             public boolean onClose() {
 
-                ((LexAdapter)mAdapter).changeContext( LexAdapter.VIEW_CONTEXT.LEXICON_LIST);
+                ((LexAdapter) mAdapter).changeContext(LexAdapter.VIEW_CONTEXT.LEXICON_LIST);
                 return false;
             }
         });
@@ -108,7 +136,7 @@ public class LexiconFragment extends Fragment  {
         searchView.setOnQueryTextFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View view, boolean b) {
-                ((LexAdapter)mAdapter).changeContext( LexAdapter.VIEW_CONTEXT.LEXICON_LIST);
+                ((LexAdapter) mAdapter).changeContext(LexAdapter.VIEW_CONTEXT.LEXICON_LIST);
             }
         });
 
@@ -116,10 +144,8 @@ public class LexiconFragment extends Fragment  {
     }
 
 
-
-    public void receiveItemCharIndex(int index){
-        String mLogTag = logTag+":receiveItemCharIndex";
-        Log.i(mLogTag, "Char index recieved in LexiconFragment: "+index);
+    public void receiveItemCharIndex(int index) {
+        Log.d(TAG, "Char index recieved in LexiconFragment: " + index);
 
         //TODO Scroll to the position of the CharIndex: Require JSON restructure
 
@@ -127,27 +153,76 @@ public class LexiconFragment extends Fragment  {
     }
 
 
-
-   private  void scrollView(final int index){
+    private void scrollView(final int index) {
         recyclerView.post(new Runnable() {
             @Override
             public void run() {
                 //int i = 8;
 
-                    View view = recyclerView.getChildAt(1);
-                    if(view != null) {
-                        Log.i(logTag, "Position: " + index);
-                        TextView textView = (TextView) view.findViewById(R.id.kjm_textview);
-                        String value = textView.getText().toString();
-                        Log.i(logTag, "Lexicon at position: " + value);
-                    }
+                View view = recyclerView.getChildAt(1);
+                if (view != null) {
+                    Log.i(logTag, "Position: " + index);
+                    TextView textView = (TextView) view.findViewById(R.id.kjm_textview);
+                    String value = textView.getText().toString();
+                    Log.i(logTag, "Lexicon at position: " + value);
+                }
 
-                    recyclerView.scrollToPosition(index);
+                recyclerView.scrollToPosition(index);
 
             }
         });
     }
 
 
+    @Override
+    public Loader<List<Lexicon>> onCreateLoader(int id, Bundle args) {
+        return new AsyncTaskLoader<List<Lexicon>>(this.getContext()) {
+            @Override
+            public List<Lexicon> loadInBackground() {
+                Log.d(TAG, "LoadInBackground");
+                ObjectMapper objectMapper = new ObjectMapper();
+                JsonNode rootNode = null;
+                List<Lexicon> data = null;
 
+                try {
+                    InputStream inputStream = this.getContext()
+                            .getResources().openRawResource(R.raw.kejomlexicon_new);
+                    rootNode = objectMapper.readTree(inputStream);
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                if (rootNode != null) {
+                    try {
+                        data = objectMapper.readValue(rootNode.toString(),
+                                new TypeReference<List<Lexicon>>() {
+                                });
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+
+                return data == null ? new ArrayList<Lexicon>() : data;
+            }
+
+            @Override
+            protected void onStartLoading() {
+                Log.d(TAG, "onStartLoading");
+                forceLoad();
+            }
+        };
+    }
+
+    @Override
+    public void onLoadFinished(Loader<List<Lexicon>> loader, List<Lexicon> data) {
+        Log.d(TAG, String.valueOf(data.size()));
+        mAdapter.setData(data);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<List<Lexicon>> loader) {
+        Log.d(TAG, "onLoaderReset");
+    }
 }

@@ -25,6 +25,7 @@ import com.prestech.babankilexicon.actvity.AlphabetFragment;
 import com.prestech.babankilexicon.model.Lexicon;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> implements Filterable {
     private static String TAG = "PRESDEBUG";
@@ -36,8 +37,8 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
     private LexiconFilter lexiconFilter;
     private LinearLayout lastToggled = null;
     private CardView lastRoot = null;
-
-    private final String[] alphabets = {"A", "B", "Bv", "Ch", "D", "Dz", "E", "Ə", "F", "G", "Gh", "I", "Ɨ", "J", "ʼ", "K", "L", "M", "N", "Ny", "Ŋ", "O", "Pf", "S", "Sh", "T", "Ts", "U", "Ʉ", "V", "W", "Y", "Z", "Zh"};
+    private List<Lexicon> mDataset;
+    private List<Lexicon> originalDataset;
 
 
     public enum VIEW_CONTEXT {FAVORITE_LIST, LEXICON_LIST, ALPHABET_LIST, SEARCH_LIST}
@@ -120,14 +121,20 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
             listOfLexicon = new ArrayList<>();
         }
 
+        mDataset = new ArrayList<>();
         //lexDataSet =  lexDataSource.loadInitialData();
+    }
+
+    public void setData(List<Lexicon> data) {
+        this.originalDataset.addAll(data);
+        this.mDataset = data;
+        notifyDataSetChanged();
     }
 
     public LexAdapter(Context context, VIEW_CONTEXT view_context, AlphabetFragment.OnCharIndexSelectListener listener) {
         this(context, view_context);
         this.onCharIndexSelectListener = listener;
     }
-
 
     /**
      * Interface implementation
@@ -152,7 +159,7 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
                     @Override
                     public void onClick(View view) {
                         if (onCharIndexSelectListener != null) {
-                            TextView textView = (TextView) view.findViewById(R.id.alpabet_textview);
+                            TextView textView = view.findViewById(R.id.alpabet_textview);
                             String value = textView.getText().toString();
 
                             int alpaIndex = lexDataSource.findAlphaIndex(value);
@@ -191,8 +198,8 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
         String lexiconId;
 
         if (view_context == VIEW_CONTEXT.ALPHABET_LIST) {
-            Log.i("LEXICON_LOG", "Setting alphabet char index value " + alphabets[dataIndex]);
-            lexViewHolder.alphabetTv.setText(alphabets[dataIndex]);
+            Log.i("LEXICON_LOG", "Setting alphabet char index value " + LexDataSource.alphabets[dataIndex]);
+            lexViewHolder.alphabetTv.setText(LexDataSource.alphabets[dataIndex]);
             return;
         }
 
@@ -201,11 +208,11 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
         lexViewHolder.kjmTextView.setText(lexicon.getKejomWord());
         lexViewHolder.engTextView.setText(lexicon.getEnglishWord());
 
-            lexViewHolder.partOfSpeechLtv.setValueText(lexicon.getPartOfSpeech());
-            lexViewHolder.pronLtv.setValueText(lexicon.getPronunciation());
-            lexViewHolder.examplesLtv.setValueText(lexicon.getExamplePhrase());
-            lexViewHolder.variationLtv.setValueText(lexicon.getVariant());
-            lexViewHolder.pluralLtv.setValueText(lexicon.getPluralForm());
+        lexViewHolder.partOfSpeechLtv.setValueText(lexicon.getPartOfSpeech());
+        lexViewHolder.pronLtv.setValueText(lexicon.getPronunciation());
+        lexViewHolder.examplesLtv.setValueText(lexicon.getExamplePhrase());
+        lexViewHolder.variationLtv.setValueText(lexicon.getVariant());
+        lexViewHolder.pluralLtv.setValueText(lexicon.getPluralForm());
 
 
         // TODO add image link to data model, fetch and display
@@ -248,11 +255,11 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
     public int getItemCount() {
         switch (view_context) {
             case FAVORITE_LIST:
-                return FavLexManager.getFavListSize();
+//                return FavLexManager.getFavListSize();
+            case LEXICON_LIST:
+                return mDataset.size();
             case ALPHABET_LIST:
                 return 34;
-            case LEXICON_LIST:
-                return 1993;
             case SEARCH_LIST:
                 return listOfLexicon.size();
             default:
@@ -269,11 +276,12 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
     private Lexicon GetLexiconItem(int dataIndex) {
         switch (view_context) {
             case FAVORITE_LIST:
-                return lexDataSource.getLexicon(FavLexManager.getFavLexiconId((dataIndex)));
+//                return lexDataSource.getLexicon(FavLexManager.getFavLexiconId((dataIndex)));
             case LEXICON_LIST:
-                return lexDataSource.getLexicon(String.valueOf(dataIndex));
+//                return lexDataSource.getLexicon(String.valueOf(dataIndex));
             case SEARCH_LIST:
-                return listOfLexicon.get(dataIndex);
+//                return listOfLexicon.get(dataIndex);
+                return mDataset.get(dataIndex);
             case ALPHABET_LIST:
             default:
                 return new Lexicon();
