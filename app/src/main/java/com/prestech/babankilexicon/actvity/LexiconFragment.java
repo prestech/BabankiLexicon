@@ -11,13 +11,16 @@ import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.SearchView;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+//import android.widget.SearchView;
 import android.widget.TextView;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -34,14 +37,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LexiconFragment extends Fragment implements LoaderManager.LoaderCallbacks<List<Lexicon>> {
-    private final String TAG = "LexiconFragment";
+    private final String TAG =  Constants.Logs.logTag + ":" + AlphabetFragment.class.getName();
     private RecyclerView recyclerView;
     private LexAdapter mAdapter;
     private RecyclerView.LayoutManager layoutManager;
 
     private String[] lexData = new String[100];
-    private static String logTag = Constants.Logs.logTag + ":" + AlphabetFragment.class.getName();
-    private int scrollIndex = 0;
 
     @Nullable
     @Override
@@ -67,7 +68,6 @@ public class LexiconFragment extends Fragment implements LoaderManager.LoaderCal
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        Log.d(TAG, "onActivityCreated");
         getLoaderManager().initLoader(0, null, this);
         loadData();
 
@@ -85,15 +85,17 @@ public class LexiconFragment extends Fragment implements LoaderManager.LoaderCal
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-
         inflater.inflate(R.menu.options_menu, menu);
         super.onCreateOptionsMenu(menu, inflater);
-
-        String mlogTag = logTag + ":onAttachFragment";
 
         // Get the SearchView and set the searchable configuration
         SearchManager searchManager = (SearchManager) getActivity().getSystemService(Context.SEARCH_SERVICE);
         final SearchView searchView = (SearchView) menu.findItem(R.id.search).getActionView();
+
+        // remove search icon from search input field and set query hint
+        searchView.setIconified(false);
+        searchView.setQueryHint(getString(R.string.search_hint));
+
         // Assumes current activity is the searchable activity
         searchView.setSearchableInfo(searchManager.getSearchableInfo(getActivity().getComponentName()));
         searchView.setIconifiedByDefault(true); // Do not iconify the widget; expand it by default
@@ -103,10 +105,9 @@ public class LexiconFragment extends Fragment implements LoaderManager.LoaderCal
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-
-                Log.i(logTag, "Search query: " + query);
+                Log.i(TAG, "Search query: " + query);
                 //Call a DataSource Function to get a list of the result.
-                ((LexAdapter) mAdapter).getFilter().filter(query);
+                mAdapter.getFilter().filter(query);
 
                 return true;
 
@@ -114,9 +115,8 @@ public class LexiconFragment extends Fragment implements LoaderManager.LoaderCal
 
             @Override
             public boolean onQueryTextChange(String newText) {
-
                 if (newText == null || newText.trim().equals("")) {
-                    ((LexAdapter) mAdapter).changeContext(LexAdapter.VIEW_CONTEXT.LEXICON_LIST);
+                    mAdapter.clearSearch();
                     return true;
                 }
                 return false;
@@ -127,8 +127,7 @@ public class LexiconFragment extends Fragment implements LoaderManager.LoaderCal
         searchView.setOnCloseListener(new SearchView.OnCloseListener() {
             @Override
             public boolean onClose() {
-
-                ((LexAdapter) mAdapter).changeContext(LexAdapter.VIEW_CONTEXT.LEXICON_LIST);
+                mAdapter.clearSearch();
                 return false;
             }
         });
@@ -136,16 +135,14 @@ public class LexiconFragment extends Fragment implements LoaderManager.LoaderCal
         searchView.setOnQueryTextFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View view, boolean b) {
-                ((LexAdapter) mAdapter).changeContext(LexAdapter.VIEW_CONTEXT.LEXICON_LIST);
+                mAdapter.clearSearch();
             }
         });
-
-
     }
 
 
     public void receiveItemCharIndex(int index) {
-        Log.d(TAG, "Char index recieved in LexiconFragment: " + index);
+        Log.d(TAG, "Char index received in LexiconFragment: " + index);
 
         //TODO Scroll to the position of the CharIndex: Require JSON restructure
 
@@ -161,10 +158,10 @@ public class LexiconFragment extends Fragment implements LoaderManager.LoaderCal
 
                 View view = recyclerView.getChildAt(1);
                 if (view != null) {
-                    Log.i(logTag, "Position: " + index);
+                    Log.i(TAG, "Position: " + index);
                     TextView textView = (TextView) view.findViewById(R.id.kjm_textview);
                     String value = textView.getText().toString();
-                    Log.i(logTag, "Lexicon at position: " + value);
+                    Log.i(TAG, "Lexicon at position: " + value);
                 }
 
                 recyclerView.scrollToPosition(index);

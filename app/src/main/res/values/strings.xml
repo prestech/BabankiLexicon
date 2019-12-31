@@ -7,4 +7,5 @@
     <string name="cd_word_image">Word image</string>
     <string name="cd_favorite">Favorite</string>
     <string name="cd_audio">Audio</string>
+    <string name="search_hint">Search English term</string>
 </resources>

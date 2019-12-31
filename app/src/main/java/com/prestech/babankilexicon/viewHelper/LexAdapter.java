@@ -122,6 +122,7 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
         }
 
         mDataset = new ArrayList<>();
+        originalDataset = new ArrayList<>();
         //lexDataSet =  lexDataSource.loadInitialData();
     }
 
@@ -339,8 +340,9 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
         return lexiconFilter;
     }
 
-    public void changeContext(VIEW_CONTEXT context) {
-        this.view_context = context;
+    public void clearSearch() {
+//        this.view_context = context;
+        mDataset = originalDataset;
         notifyDataSetChanged();
     }
 
@@ -359,76 +361,93 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
                 return null;
             }
 
-            ArrayList<Lexicon> filteredData = new ArrayList<>();
-
-            //
-            int pageIncrement = 100;
-
-            int startIndex = 1;
-            int endIndex = pageIncrement;
-
-            int MAX_INDEX = 1993; //Max number of lexicons for now
-
-            while (endIndex < MAX_INDEX) {
-
-
-                for (Lexicon lexicon : lexDataSource.provideData(startIndex, endIndex)) {
-
-                    if (lexicon == null) continue;
-
-                    if (lexicon.getEnglishWord().toLowerCase()
-                            .contains(charSequence.toString().toLowerCase())) {
-
-                        System.out.println("Found searched word " + lexicon.getEnglishWord());
-
-                        filteredData.add(lexicon);
-
-                    }
-                }
-
-                if (endIndex < MAX_INDEX) {
-                    startIndex = endIndex;
-                    endIndex = endIndex + pageIncrement;
-                }
-                if (endIndex == MAX_INDEX) {
-                    endIndex++;
-                }
-
-                if (endIndex > MAX_INDEX) {
-                    endIndex = MAX_INDEX;
-                    startIndex = endIndex - 1;
-
-                    for (Lexicon lexicon : lexDataSource.provideData(startIndex, endIndex)) {
-                        if (lexicon.getEnglishWord().toLowerCase()
-                                .contains(charSequence.toString().toLowerCase())) {
-
-                            System.out.println("Found searched word " + lexicon.getEnglishWord());
-
-                            filteredData.add(lexicon);
-
-                        }
-                    }
-                    break;
-                }
-
+            List<Lexicon> filteredData;
+            if (charSequence.length() == 0)
+                filteredData = originalDataset;
+            else {
+                filteredData = getFilteredData(charSequence.toString().toLowerCase());
             }
-
-            endIndex = 0;
-            startIndex = 0;
-
+//
+//            //
+//            int pageIncrement = 100;
+//
+//            int startIndex = 1;
+//            int endIndex = pageIncrement;
+//
+//            int MAX_INDEX = originalDataset.size(); //Max number of lexicons for now
+//
+//            while (endIndex < MAX_INDEX) {
+//
+//
+//                for (Lexicon lexicon : lexDataSource.provideData(startIndex, endIndex)) {
+//
+//                    if (lexicon == null) continue;
+//
+//                    if (lexicon.getEnglishWord().toLowerCase()
+//                            .contains(charSequence.toString().toLowerCase())) {
+//
+//                        System.out.println("Found searched word " + lexicon.getEnglishWord());
+//
+//                        filteredData.add(lexicon);
+//
+//                    }
+//                }
+//
+//                if (endIndex < MAX_INDEX) {
+//                    startIndex = endIndex;
+//                    endIndex = endIndex + pageIncrement;
+//                }
+//                if (endIndex == MAX_INDEX) {
+//                    endIndex++;
+//                }
+//
+//                if (endIndex > MAX_INDEX) {
+//                    endIndex = MAX_INDEX;
+//                    startIndex = endIndex - 1;
+//
+//                    for (Lexicon lexicon : lexDataSource.provideData(startIndex, endIndex)) {
+//                        if (lexicon.getEnglishWord().toLowerCase()
+//                                .contains(charSequence.toString().toLowerCase())) {
+//
+//                            System.out.println("Found searched word " + lexicon.getEnglishWord());
+//
+//                            filteredData.add(lexicon);
+//
+//                        }
+//                    }
+//                    break;
+//                }
+//
+//            }
+//
+//            endIndex = 0;
+//            startIndex = 0;
+//
             filteredResults.values = filteredData;
-            filteredResults.count = filteredData.size();
+            Log.d(TAG, "Filtered count: " + filteredResults.count);
+//            filteredResults.count = filteredData.size();
+            Log.d(TAG, "Filtered count: " + filteredResults.count);
 
 
             return filteredResults;
         }
 
+        private List<Lexicon> getFilteredData(String constraint) {
+            List<Lexicon> results = new ArrayList<>();
+            for (Lexicon lexicon : originalDataset) {
+                if (lexicon.getEnglishWord().toLowerCase().contains(constraint))
+                    results.add(lexicon);
+            }
+            return results;
+        }
+
         @Override
         protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
-            listOfLexicon.clear();
-            listOfLexicon.addAll(((ArrayList<Lexicon>) filterResults.values));
-            Log.i("publishResults", "publishResults: Number of search results: " + listOfLexicon.size());
-            view_context = VIEW_CONTEXT.SEARCH_LIST;
+//            listOfLexicon.clear();
+//            listOfLexicon.addAll(((ArrayList<Lexicon>) filterResults.values));
+            mDataset = (List<Lexicon>) filterResults.values;
+            Log.d(TAG, "publishResults: Number of search results: " + listOfLexicon.size());
+//            view_context = VIEW_CONTEXT.SEARCH_LIST;
             notifyDataSetChanged();
         }
     }
