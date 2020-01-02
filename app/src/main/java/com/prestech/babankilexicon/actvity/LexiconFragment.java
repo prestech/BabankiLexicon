@@ -7,6 +7,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
+import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.widget.LinearLayoutManager;
@@ -18,9 +19,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-//import android.widget.SearchView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -30,49 +29,92 @@ import com.prestech.babankilexicon.R;
 import com.prestech.babankilexicon.Utility.Constants;
 import com.prestech.babankilexicon.model.Lexicon;
 import com.prestech.babankilexicon.viewHelper.LexAdapter;
+import com.prestech.babankilexicon.viewHelper.OnAlphabetSelectListener;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LexiconFragment extends Fragment implements LoaderManager.LoaderCallbacks<List<Lexicon>> {
-    private final String TAG =  Constants.Logs.logTag + ":" + AlphabetFragment.class.getName();
-    private RecyclerView recyclerView;
-    private LexAdapter mAdapter;
-    private RecyclerView.LayoutManager layoutManager;
-
-    private String[] lexData = new String[100];
+public class LexiconFragment extends Fragment implements LoaderCallbacks<List<Lexicon>>, OnAlphabetSelectListener {
+    private final String TAG = Constants.Logs.logTag + ":" + this.getClass().getName();
+    private RecyclerView mLexiconRecyclerView;
+    RecyclerView.LayoutManager mLexiconLayoutManager;
+    RecyclerView mAlphabetRecyclerView;
+    private LexAdapter mLexiconAdapter;
+    private LexAdapter mAlphabetAdapter;
+    RecyclerView.SmoothScroller smoothScroller;
+    private View mLoadingIndicator;
+    private boolean dataLoaded = false;
+    List<Lexicon> lexData;
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         View view = inflater.inflate(R.layout.lex_recycler_view, container, false);
 
         setHasOptionsMenu(true);
 
-        recyclerView = view.findViewById(R.id.lex_recycler_view);
-        recyclerView.setHasFixedSize(false);
+        // Setup lexicon recycler view
+        mLexiconRecyclerView = view.findViewById(R.id.lex_recycler_view);
+        mLexiconRecyclerView.setHasFixedSize(false);
+//        smoothScroller = new LinearSmoothScroller(getContext()) {
+//            @Override
+//            protected int getVerticalSnapPreference() {
+//                return SNAP_TO_START;
+//            }
+//
+//
+//        };
 
         //set layout; linear layout
-        layoutManager = new LinearLayoutManager(view.getContext());
-        recyclerView.setLayoutManager(layoutManager);
+        mLexiconLayoutManager = new LinearLayoutManager(view.getContext());
+        mLexiconRecyclerView.setLayoutManager(mLexiconLayoutManager);
 
         //setup adapter
-        mAdapter = new LexAdapter(view.getContext(), LexAdapter.VIEW_CONTEXT.LEXICON_LIST);
-        recyclerView.setAdapter(mAdapter);
+        mLexiconAdapter = new LexAdapter(view.getContext(), LexAdapter.VIEW_CONTEXT.LEXICON_LIST);
+        mLexiconRecyclerView.setAdapter(mLexiconAdapter);
+
+
+        // Setup alphabet recycler view
+        mAlphabetRecyclerView = view.findViewById(R.id.alphabet_recycler_view);
+        mAlphabetRecyclerView.setHasFixedSize(true);
+
+        RecyclerView.LayoutManager alphabetLayoutManager = new LinearLayoutManager(view.getContext());
+        mAlphabetRecyclerView.setLayoutManager(alphabetLayoutManager);
+
+        mAlphabetAdapter = new LexAdapter(view.getContext(),
+                LexAdapter.VIEW_CONTEXT.ALPHABET_LIST, this);
+        mAlphabetRecyclerView.setAdapter(mAlphabetAdapter);
+
+        // Setup loader
+        mLoadingIndicator = view.findViewById(R.id.loading_indicator);
+        if (dataLoaded) {
+            mLexiconRecyclerView.setVisibility(View.VISIBLE);
+            mLexiconRecyclerView.setVisibility(View.VISIBLE);
+            mLoadingIndicator.setVisibility(View.GONE);
+        } else {
+            mLexiconRecyclerView.setVisibility(View.GONE);
+            mLexiconRecyclerView.setVisibility(View.GONE);
+            mLoadingIndicator.setVisibility(View.VISIBLE);
+        }
+        setAdapterData();
 
         return view;
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        getLoaderManager().initLoader(0, null, this);
-        loadData();
+        if (!dataLoaded) {
+            dataLoaded = true;
+            loadData();
+        }
 
         super.onActivityCreated(savedInstanceState);
     }
+
 
     private void loadData() {
         LoaderManager loaderManager = getLoaderManager();
@@ -107,7 +149,7 @@ public class LexiconFragment extends Fragment implements LoaderManager.LoaderCal
             public boolean onQueryTextSubmit(String query) {
                 Log.i(TAG, "Search query: " + query);
                 //Call a DataSource Function to get a list of the result.
-                mAdapter.getFilter().filter(query);
+                mLexiconAdapter.getFilter().filter(query);
 
                 return true;
 
@@ -116,7 +158,7 @@ public class LexiconFragment extends Fragment implements LoaderManager.LoaderCal
             @Override
             public boolean onQueryTextChange(String newText) {
                 if (newText == null || newText.trim().equals("")) {
-                    mAdapter.clearSearch();
+                    mLexiconAdapter.clearSearch();
                     return true;
                 }
                 return false;
@@ -127,17 +169,17 @@ public class LexiconFragment extends Fragment implements LoaderManager.LoaderCal
         searchView.setOnCloseListener(new SearchView.OnCloseListener() {
             @Override
             public boolean onClose() {
-                mAdapter.clearSearch();
+                mLexiconAdapter.clearSearch();
                 return false;
             }
         });
 
-        searchView.setOnQueryTextFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View view, boolean b) {
-                mAdapter.clearSearch();
-            }
-        });
+//        searchView.setOnQueryTextFocusChangeListener(new View.OnFocusChangeListener() {
+//            @Override
+//            public void onFocusChange(View view, boolean b) {
+//                mLexiconAdapter.clearSearch();
+//            }
+//        });
     }
 
 
@@ -147,29 +189,30 @@ public class LexiconFragment extends Fragment implements LoaderManager.LoaderCal
         //TODO Scroll to the position of the CharIndex: Require JSON restructure
 
         scrollView(index);
+//        smoothScroller.setTargetPosition(index);
+//        mLexiconLayoutManager.startSmoothScroll(smoothScroller);
     }
 
 
     private void scrollView(final int index) {
-        recyclerView.post(new Runnable() {
+        mLexiconRecyclerView.post(new Runnable() {
             @Override
             public void run() {
                 //int i = 8;
 
-                View view = recyclerView.getChildAt(1);
+                View view = mLexiconRecyclerView.getChildAt(1);
                 if (view != null) {
                     Log.i(TAG, "Position: " + index);
-                    TextView textView = (TextView) view.findViewById(R.id.kjm_textview);
+                    TextView textView = view.findViewById(R.id.kjm_textview);
                     String value = textView.getText().toString();
                     Log.i(TAG, "Lexicon at position: " + value);
                 }
 
-                recyclerView.scrollToPosition(index);
+                mLexiconRecyclerView.scrollToPosition(index);
 
             }
         });
     }
-
 
     @Override
     public Loader<List<Lexicon>> onCreateLoader(int id, Bundle args) {
@@ -200,7 +243,6 @@ public class LexiconFragment extends Fragment implements LoaderManager.LoaderCal
                     }
                 }
 
-
                 return data == null ? new ArrayList<Lexicon>() : data;
             }
 
@@ -215,11 +257,31 @@ public class LexiconFragment extends Fragment implements LoaderManager.LoaderCal
     @Override
     public void onLoadFinished(Loader<List<Lexicon>> loader, List<Lexicon> data) {
         Log.d(TAG, String.valueOf(data.size()));
-        mAdapter.setData(data);
+        lexData = data;
+        mLexiconAdapter.setData(data);
+        mAlphabetAdapter.setData(data);
+        setAdapterData();
+        mLoadingIndicator.setVisibility(View.GONE);
+        mLexiconRecyclerView.setVisibility(View.VISIBLE);
+        mAlphabetRecyclerView.setVisibility(View.VISIBLE);
+    }
+
+    private void setAdapterData() {
+        if (lexData == null)
+            return;
+        mLexiconAdapter.setData(lexData);
+        mAlphabetAdapter.setData(lexData);
     }
 
     @Override
     public void onLoaderReset(Loader<List<Lexicon>> loader) {
         Log.d(TAG, "onLoaderReset");
     }
+
+
+    @Override
+    public void retrieveSelectedIndex(int index) {
+        receiveItemCharIndex(index);
+    }
 }
+

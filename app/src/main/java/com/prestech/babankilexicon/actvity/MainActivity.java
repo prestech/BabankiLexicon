@@ -1,33 +1,26 @@
 package com.prestech.babankilexicon.actvity;
 
-import android.app.SearchManager;
-import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.widget.SearchView;
 
 import com.prestech.babankilexicon.R;
 import com.prestech.babankilexicon.Utility.Constants;
 import com.prestech.babankilexicon.Utility.FavLexManager;
 
-public class MainActivity extends AppCompatActivity implements AlphabetFragment.OnCharIndexSelectListener {
-    private ViewPager viewPager;
+public class MainActivity extends AppCompatActivity {
     private FragmentManager fragmentManager;
     private FavFragment favFragment;
-    private MainLexiconListFragment mainLexiconFragment;
-    private FragmentTransaction fragTransaction;
+    private HomeFragment homeFragment;
     private LexiconFragment lexiconFragment;
-    private static String logTag = Constants.Logs.logTag+":"+MainActivity.class.getName();
+    private static String TAG = Constants.Logs.logTag + ":" + MainActivity.class.getName();
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -36,27 +29,31 @@ public class MainActivity extends AppCompatActivity implements AlphabetFragment.
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             switch (item.getItemId()) {
                 case R.id.navigation_home:
-                    HomeFragment homeFragment = new HomeFragment();
-                    fragTransaction = fragmentManager.beginTransaction();
-                    fragTransaction.replace(R.id.fragment_container, homeFragment);
-                    fragTransaction.commit();
-                    return true;
+                    if (homeFragment == null)
+                        homeFragment = new HomeFragment();
+                    return openFragment(homeFragment);
                 case R.id.navigation_lexicon:
-                    mainLexiconFragment = new MainLexiconListFragment();
-                    fragTransaction = fragmentManager.beginTransaction();
-                    fragTransaction.replace(R.id.fragment_container, mainLexiconFragment, Constants.FragmentTags.mainFragment);
-                    fragTransaction.commit();
-                    return true;
+
+                    Log.d(TAG, "MainFalse");
+                    if (lexiconFragment == null)
+                        lexiconFragment = new LexiconFragment();
+                    return openFragment(lexiconFragment);
                 case R.id.navigation_favorite:
-                    favFragment = new FavFragment();
-                    fragTransaction = fragmentManager.beginTransaction();
-                    fragTransaction.replace(R.id.fragment_container, favFragment);
-                    fragTransaction.commit();
-                    return true;
+                    if (favFragment == null)
+                        favFragment = new FavFragment();
+                    return openFragment(favFragment);
             }
+            Log.d(TAG, "MainFalse");
             return false;
         }
     };
+
+    private boolean openFragment(Fragment fragment) {
+        FragmentTransaction transaction = fragmentManager.beginTransaction();
+        transaction.replace(R.id.fragment_container, fragment);
+        transaction.commit();
+        return true;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,12 +67,7 @@ public class MainActivity extends AppCompatActivity implements AlphabetFragment.
         navView.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
         FavLexManager.initializeManager(getApplication());
-
-        AlphabetFragment.setOnCharIndexSelectListener(this);
-
-
     }
-
 
 
     @Override
@@ -91,7 +83,7 @@ public class MainActivity extends AppCompatActivity implements AlphabetFragment.
        /* MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.options_menu, menu);
 
-        String mlogTag = logTag+":onAttachFragment";
+        String mlogTag = TAG+":onAttachFragment";
 
         // Get the SearchView and set the searchable configuration
         SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
@@ -117,34 +109,4 @@ public class MainActivity extends AppCompatActivity implements AlphabetFragment.
 
         return true;
     }
-
-    @Override
-    public void onAttachFragment(Fragment fragment) {
-        super.onAttachFragment(fragment);
-        String mlogTag = logTag+":onAttachFragment";
-
-        if(fragment instanceof MainLexiconListFragment){
-            MainLexiconListFragment mainLexiconListFragment = (MainLexiconListFragment)fragment;
-            lexiconFragment = (LexiconFragment) mainLexiconListFragment.getFragmentManager().findFragmentById(R.id.lexicon_frag);
-        }
-    }
-
-    @Override
-    public void retrieveSelectedIndex(int index) {
-
-        String mlogTag = logTag+":retrieveSelectedIndex";
-
-        Log.i(mlogTag,"Message Received by main activity"+index);
-        //call
-        MainLexiconListFragment mainLexiconListFragment = (MainLexiconListFragment) getSupportFragmentManager().findFragmentByTag(Constants.FragmentTags.mainFragment);
-
-        if(mainLexiconListFragment != null) {
-            mainLexiconListFragment.receiveItemCharIndex(index);
-        }else{
-            Log.i(mlogTag, "lexiconFragment is null");
-        }
-
-    }
-
-
 }

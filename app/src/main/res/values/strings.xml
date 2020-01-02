@@ -8,4 +8,5 @@
     <string name="cd_favorite">Favorite</string>
     <string name="cd_audio">Audio</string>
     <string name="search_hint">Search English term</string>
+    <string name="lexicon_loading_text">Getting lexicon</string>
 </resources>

@@ -17,32 +17,35 @@ import android.widget.TextView;
 
 import com.prestech.babankilexicon.R;
 import com.prestech.babankilexicon.Utility.AudioManager;
+import com.prestech.babankilexicon.Utility.Constants;
 import com.prestech.babankilexicon.Utility.DetailAnimation;
 import com.prestech.babankilexicon.Utility.FavLexManager;
 import com.prestech.babankilexicon.Utility.LabeledTextView;
 import com.prestech.babankilexicon.Utility.LexDataSource;
-import com.prestech.babankilexicon.actvity.AlphabetFragment;
 import com.prestech.babankilexicon.model.Lexicon;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> implements Filterable {
-    private static String TAG = "PRESDEBUG";
-    private ArrayList<Lexicon> listOfLexicon;
+    private static final int ALPHABET_INDEX_OFFSET = 0;
+    private static final int EXPANDED_CARD_ELEVATION = 10;
+    private static final String TAG =
+            Constants.Logs.logTag + ":" + LexAdapter.class.getName();
+    //    private ArrayList<Lexicon> listOfLexicon;
     private LexDataSource lexDataSource;
     private VIEW_CONTEXT view_context;
     private AudioManager audioManager;
-    private AlphabetFragment.OnCharIndexSelectListener onCharIndexSelectListener;
+    private OnAlphabetSelectListener onCharIndexSelectListener;
     private LexiconFilter lexiconFilter;
     private LinearLayout lastToggled = null;
     private CardView lastRoot = null;
-    private List<Lexicon> mDataset;
-    private List<Lexicon> originalDataset;
-
+    private List<Lexicon> mLexicons;
+    private List<Lexicon> originalLexicons;
+    private List<String> mAlphaList;
 
     public enum VIEW_CONTEXT {FAVORITE_LIST, LEXICON_LIST, ALPHABET_LIST, SEARCH_LIST}
-
 
     public class LexViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         TextView engTextView, kjmTextView, alphabetTv;
@@ -78,7 +81,7 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
                     pictureIv = view.findViewById(R.id.word_picture);
                     break;
                 case ALPHABET_LIST:
-                    alphabetTv = view.findViewById(R.id.alpabet_textview);
+                    alphabetTv = view.findViewById(R.id.alphabet_tv);
                     break;
             }
         }
@@ -117,22 +120,27 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
             audioManager = new AudioManager(context);
         }
 
-        if (listOfLexicon == null) {
-            listOfLexicon = new ArrayList<>();
-        }
+//        if (listOfLexicon == null) {
+//            listOfLexicon = new ArrayList<>();
+//        }
 
-        mDataset = new ArrayList<>();
-        originalDataset = new ArrayList<>();
+        mLexicons = new ArrayList<>();
+        originalLexicons = new ArrayList<>();
+        mAlphaList = new ArrayList<>();
         //lexDataSet =  lexDataSource.loadInitialData();
     }
 
     public void setData(List<Lexicon> data) {
-        this.originalDataset.addAll(data);
-        this.mDataset = data;
+        this.originalLexicons.addAll(data);
+        this.mLexicons = data;
+
+        if (view_context == VIEW_CONTEXT.ALPHABET_LIST)
+            mAlphaList.addAll(Arrays.asList(LexDataSource.alphabets));
         notifyDataSetChanged();
     }
 
-    public LexAdapter(Context context, VIEW_CONTEXT view_context, AlphabetFragment.OnCharIndexSelectListener listener) {
+    public LexAdapter(Context context, VIEW_CONTEXT view_context,
+                      OnAlphabetSelectListener listener) {
         this(context, view_context);
         this.onCharIndexSelectListener = listener;
     }
@@ -143,7 +151,6 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
     @NonNull
     @Override
     public LexViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, final int i) {
-
         View view = null;
         LexViewHolder lexViewHolder = null;
 
@@ -160,18 +167,21 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
                     @Override
                     public void onClick(View view) {
                         if (onCharIndexSelectListener != null) {
-                            TextView textView = view.findViewById(R.id.alpabet_textview);
+                            TextView textView = view.findViewById(R.id.alphabet_tv);
                             String value = textView.getText().toString();
 
-                            int alpaIndex = lexDataSource.findAlphaIndex(value);
-                            if (alpaIndex == -1) {
+                            int alphaIndex = findAlphaIndex(value);
+
+                            if (alphaIndex == -1) {
                                 return;
                             }
-                            alpaIndex = alpaIndex + 7;
+                            alphaIndex = alphaIndex + ALPHABET_INDEX_OFFSET;
 
-                            System.out.println("Alphabet index: " + alpaIndex);
+                            Log.d(TAG, String.format("FindAlphabet index: %d, key: %s, value: %s",
+                                    alphaIndex,
+                                    value, mLexicons.get(alphaIndex)));
 
-                            onCharIndexSelectListener.retrieveSelectedIndex(alpaIndex);
+                            onCharIndexSelectListener.retrieveSelectedIndex(alphaIndex);
 
                         } else {
                             Log.i("LEXICON_LOG", "onCharIndexSelectListener is null");
@@ -193,14 +203,25 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
 
     }//onCreateViewHolder() Ends
 
+    private int findAlphaIndex(String key) {
+        String tribalWord;
+
+        for (int i = 0; i < mLexicons.size(); i++) {
+            tribalWord = mLexicons.get(i).getKejomWord();
+            if (tribalWord.toLowerCase().startsWith(key.toLowerCase()))
+                return i;
+        }
+
+        return -1;
+    }
+
     @Override
     public void onBindViewHolder(@NonNull LexViewHolder lexViewHolder, int dataIndex) {
         Lexicon lexicon = GetLexiconItem(dataIndex);
         String lexiconId;
 
         if (view_context == VIEW_CONTEXT.ALPHABET_LIST) {
-            Log.i("LEXICON_LOG", "Setting alphabet char index value " + LexDataSource.alphabets[dataIndex]);
-            lexViewHolder.alphabetTv.setText(LexDataSource.alphabets[dataIndex]);
+            lexViewHolder.alphabetTv.setText(mAlphaList.get(dataIndex));
             return;
         }
 
@@ -241,7 +262,7 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
             root.setCardElevation(0);
             DetailAnimation.collapse(layoutToToggle);
         } else {
-            root.setCardElevation(10);
+            root.setCardElevation(EXPANDED_CARD_ELEVATION);
             DetailAnimation.expand(layoutToToggle);
         }
     }
@@ -256,13 +277,14 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
     public int getItemCount() {
         switch (view_context) {
             case FAVORITE_LIST:
-//                return FavLexManager.getFavListSize();
-            case LEXICON_LIST:
-                return mDataset.size();
-            case ALPHABET_LIST:
-                return 34;
+                return FavLexManager.getFavListSize();
             case SEARCH_LIST:
-                return listOfLexicon.size();
+//                return listOfLexicon.size();
+            case LEXICON_LIST:
+                return mLexicons.size();
+
+            case ALPHABET_LIST:
+                return mAlphaList.size();
             default:
                 return 0;
         }
@@ -277,12 +299,12 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
     private Lexicon GetLexiconItem(int dataIndex) {
         switch (view_context) {
             case FAVORITE_LIST:
-//                return lexDataSource.getLexicon(FavLexManager.getFavLexiconId((dataIndex)));
+                return lexDataSource.getLexicon(FavLexManager.getFavLexiconId((dataIndex)));
             case LEXICON_LIST:
 //                return lexDataSource.getLexicon(String.valueOf(dataIndex));
             case SEARCH_LIST:
 //                return listOfLexicon.get(dataIndex);
-                return mDataset.get(dataIndex);
+                return mLexicons.get(dataIndex);
             case ALPHABET_LIST:
             default:
                 return new Lexicon();
@@ -342,7 +364,7 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
 
     public void clearSearch() {
 //        this.view_context = context;
-        mDataset = originalDataset;
+        mLexicons = originalLexicons;
         notifyDataSetChanged();
     }
 
@@ -357,13 +379,13 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
             FilterResults filteredResults = new FilterResults();
 
 
-            if (charSequence == null && charSequence.length() == 0) {
+            if (charSequence == null || charSequence.length() == 0) {
                 return null;
             }
 
             List<Lexicon> filteredData;
             if (charSequence.length() == 0)
-                filteredData = originalDataset;
+                filteredData = originalLexicons;
             else {
                 filteredData = getFilteredData(charSequence.toString().toLowerCase());
             }
@@ -374,7 +396,7 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
 //            int startIndex = 1;
 //            int endIndex = pageIncrement;
 //
-//            int MAX_INDEX = originalDataset.size(); //Max number of lexicons for now
+//            int MAX_INDEX = originalLexicons.size(); //Max number of lexicons for now
 //
 //            while (endIndex < MAX_INDEX) {
 //
@@ -434,7 +456,7 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
 
         private List<Lexicon> getFilteredData(String constraint) {
             List<Lexicon> results = new ArrayList<>();
-            for (Lexicon lexicon : originalDataset) {
+            for (Lexicon lexicon : originalLexicons) {
                 if (lexicon.getEnglishWord().toLowerCase().contains(constraint))
                     results.add(lexicon);
             }
@@ -445,8 +467,8 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
         protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
 //            listOfLexicon.clear();
 //            listOfLexicon.addAll(((ArrayList<Lexicon>) filterResults.values));
-            mDataset = (List<Lexicon>) filterResults.values;
-            Log.d(TAG, "publishResults: Number of search results: " + listOfLexicon.size());
+            mLexicons = (List<Lexicon>) filterResults.values;
+//            Log.d(TAG, "publishResults: Number of search results: " + listOfLexicon.size());
 //            view_context = VIEW_CONTEXT.SEARCH_LIST;
             notifyDataSetChanged();
         }
