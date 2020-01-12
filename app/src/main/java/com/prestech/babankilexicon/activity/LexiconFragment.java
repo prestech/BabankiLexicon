@@ -1,4 +1,4 @@
-package com.prestech.babankilexicon.actvity;
+package com.prestech.babankilexicon.activity;
 
 import android.app.SearchManager;
 import android.content.Context;
