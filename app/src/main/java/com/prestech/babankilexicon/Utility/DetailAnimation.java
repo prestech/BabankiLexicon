@@ -1,6 +1,5 @@
 package com.prestech.babankilexicon.Utility;
 
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
@@ -8,7 +7,6 @@ import android.view.animation.Transformation;
 
 // Adapted from https://github.com/Mustufa786/recyclerViewCollapase
 public class DetailAnimation {
-    static final String TAG = "DetailAnimation";
 
     public static void expand(final View view) {
         view.measure(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -32,7 +30,6 @@ public class DetailAnimation {
 
         view.setVisibility((View.VISIBLE));
         view.startAnimation(animation);
-        Log.d(TAG, "expanded detail");
     }
 
     public static void collapse(final View view) {
@@ -51,8 +48,7 @@ public class DetailAnimation {
             }
         };
 
-        animation.setDuration((long) (actualHeight/ view.getContext().getResources().getDisplayMetrics().density));
+        animation.setDuration((long) (actualHeight / view.getContext().getResources().getDisplayMetrics().density));
         view.startAnimation(animation);
-        Log.d(TAG, "collapsed detail");
     }
 }

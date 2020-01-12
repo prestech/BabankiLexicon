@@ -17,7 +17,6 @@ import android.widget.TextView;
 
 import com.prestech.babankilexicon.R;
 import com.prestech.babankilexicon.Utility.AudioManager;
-import com.prestech.babankilexicon.Utility.Constants;
 import com.prestech.babankilexicon.Utility.DetailAnimation;
 import com.prestech.babankilexicon.Utility.FavLexManager;
 import com.prestech.babankilexicon.Utility.LabeledTextView;
@@ -31,8 +30,6 @@ import java.util.List;
 public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> implements Filterable {
     private static final int ALPHABET_INDEX_OFFSET = 0;
     private static final int EXPANDED_CARD_ELEVATION = 10;
-    private static final String TAG =
-            Constants.Logs.logTag + ":" + LexAdapter.class.getName();
     //    private ArrayList<Lexicon> listOfLexicon;
     private LexDataSource lexDataSource;
     private VIEW_CONTEXT view_context;
@@ -177,14 +174,8 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
                             }
                             alphaIndex = alphaIndex + ALPHABET_INDEX_OFFSET;
 
-                            Log.d(TAG, String.format("FindAlphabet index: %d, key: %s, value: %s",
-                                    alphaIndex,
-                                    value, mLexicons.get(alphaIndex)));
-
                             onCharIndexSelectListener.retrieveSelectedIndex(alphaIndex);
 
-                        } else {
-                            Log.i("LEXICON_LOG", "onCharIndexSelectListener is null");
                         }
                     }
                 });
@@ -346,7 +337,6 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
                     break;
                 case R.id.adioBtn:
                     if (lexicon != null) {
-                        Log.d(TAG, lexicon.getKejomWord() + " Audio Btn clicked" + v.getId());
                         audioManager.playAudio(lexicon.getKejomWord());
                     }
                     break;
@@ -375,9 +365,7 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
 
         @Override
         protected FilterResults performFiltering(CharSequence charSequence) {
-
             FilterResults filteredResults = new FilterResults();
-
 
             if (charSequence == null || charSequence.length() == 0) {
                 return null;
@@ -389,67 +377,7 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
             else {
                 filteredData = getFilteredData(charSequence.toString().toLowerCase());
             }
-//
-//            //
-//            int pageIncrement = 100;
-//
-//            int startIndex = 1;
-//            int endIndex = pageIncrement;
-//
-//            int MAX_INDEX = originalLexicons.size(); //Max number of lexicons for now
-//
-//            while (endIndex < MAX_INDEX) {
-//
-//
-//                for (Lexicon lexicon : lexDataSource.provideData(startIndex, endIndex)) {
-//
-//                    if (lexicon == null) continue;
-//
-//                    if (lexicon.getEnglishWord().toLowerCase()
-//                            .contains(charSequence.toString().toLowerCase())) {
-//
-//                        System.out.println("Found searched word " + lexicon.getEnglishWord());
-//
-//                        filteredData.add(lexicon);
-//
-//                    }
-//                }
-//
-//                if (endIndex < MAX_INDEX) {
-//                    startIndex = endIndex;
-//                    endIndex = endIndex + pageIncrement;
-//                }
-//                if (endIndex == MAX_INDEX) {
-//                    endIndex++;
-//                }
-//
-//                if (endIndex > MAX_INDEX) {
-//                    endIndex = MAX_INDEX;
-//                    startIndex = endIndex - 1;
-//
-//                    for (Lexicon lexicon : lexDataSource.provideData(startIndex, endIndex)) {
-//                        if (lexicon.getEnglishWord().toLowerCase()
-//                                .contains(charSequence.toString().toLowerCase())) {
-//
-//                            System.out.println("Found searched word " + lexicon.getEnglishWord());
-//
-//                            filteredData.add(lexicon);
-//
-//                        }
-//                    }
-//                    break;
-//                }
-//
-//            }
-//
-//            endIndex = 0;
-//            startIndex = 0;
-//
             filteredResults.values = filteredData;
-            Log.d(TAG, "Filtered count: " + filteredResults.count);
-//            filteredResults.count = filteredData.size();
-            Log.d(TAG, "Filtered count: " + filteredResults.count);
-
 
             return filteredResults;
         }
@@ -468,7 +396,6 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
 //            listOfLexicon.clear();
 //            listOfLexicon.addAll(((ArrayList<Lexicon>) filterResults.values));
             mLexicons = (List<Lexicon>) filterResults.values;
-//            Log.d(TAG, "publishResults: Number of search results: " + listOfLexicon.size());
 //            view_context = VIEW_CONTEXT.SEARCH_LIST;
             notifyDataSetChanged();
         }

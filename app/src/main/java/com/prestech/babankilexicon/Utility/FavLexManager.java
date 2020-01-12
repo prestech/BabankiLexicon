@@ -44,7 +44,6 @@ public class FavLexManager {
         try{
             ObjectMapper objectMapper = new ObjectMapper();
             favList = objectMapper.readValue(file, objectMapper.getTypeFactory().constructCollectionType(ArrayList.class, String.class) );
-            //Log.d("PRESDEBUG", "READ JSON VALUES: "+favList.toString());
         } catch (IOException e) {
             favList = new ArrayList<>();
             e.printStackTrace();

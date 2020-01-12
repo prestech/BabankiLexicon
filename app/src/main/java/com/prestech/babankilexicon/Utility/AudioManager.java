@@ -3,24 +3,21 @@ package com.prestech.babankilexicon.Utility;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
-import android.util.Log;
 
 import java.io.IOException;
 
 public class AudioManager {
 
     private static MediaPlayer mediaPlayer = null;
-    private MediaListener mediaListener;
     private Context context;
 
-    public AudioManager(Context context){
+    public AudioManager(Context context) {
         this.context = context;
     }
-    public void playAudio(String audioFile){
 
-        Log.d("PRESDEBUG", "Preparing to play audio for \""+audioFile+"\"");
+    public void playAudio(String audioFile) {
 
-        if(mediaPlayer != null){
+        if (mediaPlayer != null) {
             mediaPlayer.stop();
             mediaPlayer.release();
             mediaPlayer = null;
@@ -29,18 +26,13 @@ public class AudioManager {
         mediaPlayer = new MediaPlayer();
 
         try {
-            AssetFileDescriptor asd = context.getAssets().openFd("Kejom_Audio/"+audioFile.trim()+".mp3");
+            AssetFileDescriptor asd = context.getAssets().openFd("Kejom_Audio/" + audioFile.trim() + ".mp3");
 
-            if(asd != null) {
-                mediaPlayer.setOnPreparedListener(new MediaListener());
-                mediaPlayer.setDataSource(asd.getFileDescriptor(), asd.getStartOffset(), asd.getLength());
-                mediaPlayer.prepareAsync();
-            }else{
-                Log.d("PRESDEBUG", "Audio is not available for \""+audioFile+"\"");
+            mediaPlayer.setOnPreparedListener(new MediaListener());
+            mediaPlayer.setDataSource(asd.getFileDescriptor(), asd.getStartOffset(), asd.getLength());
+            mediaPlayer.prepareAsync();
 
-            }
-
-        } catch (IOException e ) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -49,11 +41,11 @@ public class AudioManager {
     }//createMedia() Ends
 
 
-    private class MediaListener implements MediaPlayer.OnPreparedListener{
+    private class MediaListener implements MediaPlayer.OnPreparedListener {
 
         @Override
         public void onPrepared(MediaPlayer mp) {
-                mp.start();
+            mp.start();
         }//onPrepared() Ends
 
     }

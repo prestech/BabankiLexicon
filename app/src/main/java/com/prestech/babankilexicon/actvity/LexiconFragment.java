@@ -13,20 +13,16 @@ import android.support.v4.content.Loader;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prestech.babankilexicon.R;
-import com.prestech.babankilexicon.Utility.Constants;
 import com.prestech.babankilexicon.model.Lexicon;
 import com.prestech.babankilexicon.viewHelper.LexAdapter;
 import com.prestech.babankilexicon.viewHelper.OnAlphabetSelectListener;
@@ -37,7 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LexiconFragment extends Fragment implements LoaderCallbacks<List<Lexicon>>, OnAlphabetSelectListener {
-    private final String TAG = Constants.Logs.logTag + ":" + this.getClass().getName();
     private RecyclerView mLexiconRecyclerView;
     RecyclerView.LayoutManager mLexiconLayoutManager;
     RecyclerView mAlphabetRecyclerView;
@@ -147,7 +142,6 @@ public class LexiconFragment extends Fragment implements LoaderCallbacks<List<Le
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                Log.i(TAG, "Search query: " + query);
                 //Call a DataSource Function to get a list of the result.
                 mLexiconAdapter.getFilter().filter(query);
 
@@ -184,8 +178,6 @@ public class LexiconFragment extends Fragment implements LoaderCallbacks<List<Le
 
 
     public void receiveItemCharIndex(int index) {
-        Log.d(TAG, "Char index received in LexiconFragment: " + index);
-
         //TODO Scroll to the position of the CharIndex: Require JSON restructure
 
         scrollView(index);
@@ -198,18 +190,7 @@ public class LexiconFragment extends Fragment implements LoaderCallbacks<List<Le
         mLexiconRecyclerView.post(new Runnable() {
             @Override
             public void run() {
-                //int i = 8;
-
-                View view = mLexiconRecyclerView.getChildAt(1);
-                if (view != null) {
-                    Log.i(TAG, "Position: " + index);
-                    TextView textView = view.findViewById(R.id.kjm_textview);
-                    String value = textView.getText().toString();
-                    Log.i(TAG, "Lexicon at position: " + value);
-                }
-
                 mLexiconRecyclerView.scrollToPosition(index);
-
             }
         });
     }
@@ -219,7 +200,6 @@ public class LexiconFragment extends Fragment implements LoaderCallbacks<List<Le
         return new AsyncTaskLoader<List<Lexicon>>(this.getContext()) {
             @Override
             public List<Lexicon> loadInBackground() {
-                Log.d(TAG, "LoadInBackground");
                 ObjectMapper objectMapper = new ObjectMapper();
                 JsonNode rootNode = null;
                 List<Lexicon> data = null;
@@ -248,7 +228,6 @@ public class LexiconFragment extends Fragment implements LoaderCallbacks<List<Le
 
             @Override
             protected void onStartLoading() {
-                Log.d(TAG, "onStartLoading");
                 forceLoad();
             }
         };
@@ -256,7 +235,6 @@ public class LexiconFragment extends Fragment implements LoaderCallbacks<List<Le
 
     @Override
     public void onLoadFinished(Loader<List<Lexicon>> loader, List<Lexicon> data) {
-        Log.d(TAG, String.valueOf(data.size()));
         lexData = data;
         mLexiconAdapter.setData(data);
         mAlphabetAdapter.setData(data);
@@ -275,7 +253,6 @@ public class LexiconFragment extends Fragment implements LoaderCallbacks<List<Le
 
     @Override
     public void onLoaderReset(Loader<List<Lexicon>> loader) {
-        Log.d(TAG, "onLoaderReset");
     }
 
 

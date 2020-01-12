@@ -7,12 +7,10 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import com.prestech.babankilexicon.R;
-import com.prestech.babankilexicon.Utility.Constants;
 import com.prestech.babankilexicon.Utility.FavLexManager;
 
 public class MainActivity extends AppCompatActivity {
@@ -20,7 +18,6 @@ public class MainActivity extends AppCompatActivity {
     private FavFragment favFragment;
     private HomeFragment homeFragment;
     private LexiconFragment lexiconFragment;
-    private static String TAG = Constants.Logs.logTag + ":" + MainActivity.class.getName();
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -33,8 +30,6 @@ public class MainActivity extends AppCompatActivity {
                         homeFragment = new HomeFragment();
                     return openFragment(homeFragment);
                 case R.id.navigation_lexicon:
-
-                    Log.d(TAG, "MainFalse");
                     if (lexiconFragment == null)
                         lexiconFragment = new LexiconFragment();
                     return openFragment(lexiconFragment);
@@ -43,7 +38,6 @@ public class MainActivity extends AppCompatActivity {
                         favFragment = new FavFragment();
                     return openFragment(favFragment);
             }
-            Log.d(TAG, "MainFalse");
             return false;
         }
     };
