@@ -228,7 +228,8 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
 
 
         // TODO add image link to data model, fetch and display
-        if (dataIndex % 3 == 0) lexViewHolder.pictureIv.setVisibility(View.GONE);
+        // if (dataIndex % 3 == 0)
+         lexViewHolder.pictureIv.setVisibility(View.GONE); //disable images for no
 //        lexViewHolder.pictureIv.setImageDrawable();
 
         if (!FavLexManager.lexIsFavorite(lexiconId))
