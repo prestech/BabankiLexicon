@@ -9,4 +9,35 @@
     <string name="cd_audio">Audio</string>
     <string name="search_hint">Search English term</string>
     <string name="lexicon_loading_text">Getting lexicon</string>
+    <string name="intro_to_lexicon">GENERAL INTRODUCTION \n\n
+
+        The Babanki (Kejom) language is spoken by approximately 25,000 people of Babanki Tungo and Big Babanki. These two villages are located 20 kilometers apart in Tubah Sub-division, Mezam Division, North West Province of Cameroon. Slight pronunciation differences exist between the speeches of the two villages but speakers from both understand each other perfectly well. The two villages came to exist in 1866 when a small contingent of people (40) from Big Babanki left to form what became Babanki Tungo. \n\n\n
+
+        Ethnologue (2005) lists Babanki with the code ISO 693-3 [bbk] and classifies it as Niger-Congo, Atlantic-Congo, Volta-Congo, Benue-Congo, Bantoid, Southern, Wide Grassfields, Narrow Grassfields, Ring, Centre. \n\n\n
+
+        Dieu and Renaud (1983) classify Babanki under the ALCAM code [824] as follows: Benoue-Congo, Bantoide, Bantou, Grassfield, Ring. Babanki [824] is one of the five languages of the Centre Ring Group. The others are Mmem [821], Kom [822], Bum [823], and Oku [825]. \n\n\n
+
+        Henceforth, Kejom will be used to refer to Babanki, as the people prefer to call their language (Gà’a Kəjòm), themselves (Vi’i Kəjòm), and their villages (Kəjòm Kəku, and Kəjòm Kətingù’).\n\n\n
+
+        This provisional lexicon has been compiled primarily for the speakers of Kejom, though it will also be of interest to non-speakers who desire to study or learn the language. The lexicon will likely stimulate interest in the use of the language in its written form and will be a useful tool for those learning to read and write the Kejom language. This lexicon is a step forward in the preservation of the cultural identity of the Kejom people, which is facing extinction as we evolve. Finally, this lexicon may be used as a reference material in standardizing the spelling of Kejom words and terminology.\n\n\n
+
+        The Kejom alphabet is in conformity with the General Alphabet of Cameroonian Languages, adopted in 1979 by the National Committee for the unification and harmonization of the alphabets of Cameroonian languages. \n\n\n
+
+        Over 2000 entries that serve as an introduction to Kejom words and phrases are found in this lexicon. The 1800 SIL Comparative African Word List served as a thematic basis for the initial collection of words.
+        Each lexical entry includes a phonetic transcription, part of speech, noun class and a brief definition in English. Additional information such as: variant forms1, and plural forms of nouns may also be found. Verbs are cited without the introductory infinitive particle ə.́ For example, əv́ ì ‘to come,’ is entered merely as vì v. come.\n\n\n
+
+        A general introduction precedes the body of the lexicon. The phonology of Kejom is briefly presented and the Kejom Alphabet is provided. The noun class system of Kejom is also introduced. Some noun modifiers like possessive pronouns, demonstratives and some numerals are shown in this part. Following the body of the lexicon is an English- Kejom Index of more than 2000 entries. \n\n\n
+
+        I sincerely thank those who assisted me in the verification and augmentation of the database that Christine DeVisser started eliciting in 2005. A number of people helped her at that time and I would like to acknowledge them here. Mr. P. V. Adams for providing most of the words, Mr. Awenti A. Tituwan, Mr Mutan Gabriel and Mr Ntang W. Thaddeus for the 557 wordlist they provided, and Mr. Vuwen Andrew Maley for helping to check tone on a number of words. \n\n\n
+
+        I am very grateful for the financial assistance that was provided by the Kay Williamson Educational Foundation (KWEF) as well as some kind-hearted Kejom people for the printing of this lexicon. \n\n\n
+
+        Finally, I wish to thank Dr. Robert Hedinger for all his help in advising me, and formatting the lexicon. \n\n\n
+
+        The work of compiling a lexicon is never finished. All those who use it are encouraged to share their suggested additions and corrections with the Ga’a Kejom Development Committee.\n\n\n
+
+        Dr. AKUMBU Pius WUCHU
+
+        \n\n\n
+     </string>
 </resources>
