@@ -13,6 +13,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.prestech.babankilexicon.R;
 import com.prestech.babankilexicon.Utility.AudioManager;
@@ -40,6 +41,7 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
     private List<Lexicon> mLexicons;
     private List<Lexicon> originalLexicons;
     private List<String> mAlphaList;
+    private Context context;
 
     public enum VIEW_CONTEXT {FAVORITE_LIST, LEXICON_LIST, ALPHABET_LIST, SEARCH_LIST}
 
@@ -109,6 +111,7 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
     }//LexViewHolder Ends
 
     public LexAdapter(Context context, VIEW_CONTEXT view_context) {
+        this.context = context;
         this.lexDataSource = new LexDataSource(context);
         this.view_context = view_context;
 
@@ -163,17 +166,26 @@ public class LexAdapter extends RecyclerView.Adapter<LexAdapter.LexViewHolder> i
                     @Override
                     public void onClick(View view) {
                         if (onCharIndexSelectListener != null) {
-                            TextView textView = view.findViewById(R.id.alphabet_tv);
-                            String value = textView.getText().toString();
 
+                            TextView textView = view.findViewById(R.id.alphabet_tv);
+
+                            String value = textView.getText().toString();
+                            CharSequence text = "Scrolled to words beginning with '"+value+"'";
                             int alphaIndex = findAlphaIndex(value);
 
                             if (alphaIndex == -1) {
+                                text = "'"+value+"' have no words yet";
+                                Toast toast = Toast.makeText(context, text, Toast.LENGTH_SHORT);
+                                toast.show();
                                 return;
                             }
                             alphaIndex = alphaIndex + ALPHABET_INDEX_OFFSET;
 
+                            //scolls to selected alphabet index
                             onCharIndexSelectListener.retrieveSelectedIndex(alphaIndex);
+
+                            Toast toast = Toast.makeText(context, text, Toast.LENGTH_SHORT);
+                            toast.show();
 
                         }
                     }
