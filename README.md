@@ -7,7 +7,7 @@ To think that at some point in the future, my native language will no longer exi
 
 So how can we rescue languages from extinction? With technology. Yes, the same tech that is to be blamed for fostering rapid Globalization (the main causation of language extinction) can also be used to salvage endangered languages. It is simple; documenting and packaging a language in an app will leave a digital footprint for generations to come. Giving them an opportunity to learn and enjoy the diversity in the language spectrum (we take for granted today).
 
-As an attempt to act on this vision, on my part, in collaboration with Pius Akumbu (a Linguistic Professor, my uncle, and a major contributor in documenting Babanki [my native language]), and a good friend Brunel, we came up with a digital app consisting of a simple list of Babanki-to-English lexicons known as the BabankiLexicon along with their verbal pronunciation.
+As an attempt to act on this vision, on my part, in collaboration with Pius Akumbu (a Linguistic Professor, my uncle, and a major contributor in documenting Babanki [my native language]), and a good friend Brunel, we came up with this app consisting of a simple list of Babanki-to-English lexicons known as the BabankiLexicon along with their verbal pronunciation.
 There is a total of about 2000 words, and we hope that, through this app, we will expand on the list of vocabulary as a community. 
 
 Please join us on this journey to leave a digital footprint of our endangered languages by clicking this link [https://play.google.com/apps/testing/com.prestech.babankilexicon ] to install the test (beta) version of the BabankiLexicon.
