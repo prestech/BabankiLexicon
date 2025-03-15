@@ -1,0 +1,178 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "QuickSight Dashboard with Athena dataset and parameterized controls for End Time and App Name"
+
+Parameters:
+  QuickSightUserArn:
+    Type: String
+    Description: "ARN of the QuickSight user or group to grant permissions"
+  AthenaDatabaseName:
+    Type: String
+    Description: "Name of the Athena database"
+  AthenaTableName:
+    Type: String
+    Description: "Name of the Athena table"
+  S3QueryResultsBucket:
+    Type: String
+    Description: "S3 bucket for Athena query results"
+
+Resources:
+  # QuickSight Data Source (Athena with IAM auth)
+  QuickSightAthenaDataSource:
+    Type: AWS::QuickSight::DataSource
+    Properties:
+      AwsAccountId: !Ref AWS::AccountId
+      DataSourceId: "athena-datasource"
+      Name: "AthenaDataSource"
+      Type: "ATHENA"
+      DataSourceParameters:
+        AthenaParameters:
+          WorkGroup: "primary" # Adjust if using a custom workgroup
+      # No Credentials block; IAM auth is implicit
+      Permissions:
+        - Principal: !Ref QuickSightUserArn
+          Actions:
+            - "quicksight:DescribeDataSource"
+            - "quicksight:DescribeDataSourcePermissions"
+            - "quicksight:PassDataSource"
+            - "quicksight:UpdateDataSource"
+            - "quicksight:DeleteDataSource"
+
+  # QuickSight Dataset with Parameterized Queries
+  QuickSightDataSet:
+    Type: AWS::QuickSight::DataSet
+    DependsOn: QuickSightAthenaDataSource
+    Properties:
+      AwsAccountId: !Ref AWS::AccountId
+      DataSetId: "athena-parameterized-dataset"
+      Name: "AthenaParameterizedDataSet"
+      PhysicalTableMap:
+        AthenaTable:
+          CustomSql:
+            DataSourceArn: !GetAtt QuickSightAthenaDataSource.Arn
+            Name: "athena_custom_sql"
+            SqlQuery: !Sub |
+              SELECT app_name, event_time, event_count 
+              FROM ${AthenaDatabaseName}.${AthenaTableName} 
+              WHERE event_time <= '{{#endtime}}' 
+              AND app_name IN ({{#appNameList}}) 
+              LIMIT 100
+            Columns:
+              - Name: "app_name" # Column for appNameList filter
+                Type: "STRING"
+              - Name: "event_time" # Column for endtime filter
+                Type: "DATETIME" # TIMESTAMP maps to DATETIME
+              - Name: "event_count" # Example metric
+                Type: "INTEGER"
+      Parameters:
+        - Parameter:
+            Name: "endtime"
+            ParameterValueType: "DATETIME"
+            DefaultValues:
+              StaticValues:
+                - "2025-03-15 23:59:59" # Default timestamp
+        - Parameter:
+            Name: "appNameList"
+            ParameterValueType: "MULTI_VALUED_STRING"
+            DefaultValues:
+              StaticValues:
+                - "App1" # Default list values
+                - "App2"
+      Permissions:
+        - Principal: !Ref QuickSightUserArn
+          Actions:
+            - "quicksight:DescribeDataSet"
+            - "quicksight:DescribeDataSetPermissions"
+            - "quicksight:PassDataSet"
+            - "quicksight:UpdateDataSet"
+            - "quicksight:DeleteDataSet"
+      ImportMode: "DIRECT_QUERY" # Real-time querying
+
+  # QuickSight Dashboard with Linked Controls
+  QuickSightDashboard:
+    Type: AWS::QuickSight::Dashboard
+    DependsOn: QuickSightDataSet
+    Properties:
+      AwsAccountId: !Ref AWS::AccountId
+      DashboardId: "athena-table-dashboard"
+      Name: "AthenaTableDashboard"
+      SourceEntity:
+        SourceTemplate:
+          DataSetReferences:
+            - DataSetPlaceholder: "athena-dataset-placeholder"
+              DataSetArn: !GetAtt QuickSightDataSet.Arn
+          Arn: !Sub "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:template/athena-table-template" # Placeholder
+      Definition:
+        DataSetIdentifiers:
+          athenaDataset:
+            DataSetArn: !GetAtt QuickSightDataSet.Arn
+        Sheets:
+          - SheetId: "sheet1"
+            Name: "App Event Data"
+            Visuals:
+              - TableVisual:
+                  VisualId: "table-visual-1"
+                  Title:
+                    FormatText:
+                      PlainText: "App Event Table"
+                  ChartConfiguration:
+                    FieldWells:
+                      TableAggregatedFieldWells:
+                        Values:
+                          - CategoricalDimensionField:
+                              Column:
+                                DataSetIdentifier: "athenaDataset"
+                                ColumnName: "app_name"
+                          - DateDimensionField:
+                              Column:
+                                DataSetIdentifier: "athenaDataset"
+                                ColumnName: "event_time"
+                          - NumericalDimensionField:
+                              Column:
+                                DataSetIdentifier: "athenaDataset"
+                                ColumnName: "event_count"
+                    SortConfiguration:
+                      RowSort:
+                        - FieldSort:
+                            FieldId: "event_time"
+                            Direction: "DESC" # Sort by latest events
+                    TableOptions:
+                      Orientation: "VERTICAL"
+                      HeaderStyle:
+                        Visibility: "VISIBLE"
+                        FontConfiguration:
+                          FontSize:
+                            Relative: "MEDIUM"
+                  Actions: []
+        # Define dashboard controls linked to dataset parameters
+        FilterGroups: [] # Optional: Add if you want additional filters
+        Parameters:
+          DateTimeParameters:
+            - Name: "endtime"
+              Values:
+                - "2025-03-15 23:59:59" # Default matches dataset
+              # ControlOptions not fully supported in CFN; UI generates date picker
+          StringParameters:
+            - Name: "appNameList"
+              Values:
+                - "App1"
+                - "App2" # Default matches dataset
+              # ControlOptions not fully supported in CFN; UI generates multi-select
+      Permissions:
+        - Principal: !Ref QuickSightUserArn
+          Actions:
+            - "quicksight:DescribeDashboard"
+            - "quicksight:QueryDashboard"
+            - "quicksight:UpdateDashboard"
+            - "quicksight:DeleteDashboard"
+      VersionDescription: "v1"
+
+Outputs:
+  DataSourceArn:
+    Value: !GetAtt QuickSightAthenaDataSource.Arn
+    Description: "ARN of the QuickSight Athena Data Source"
+  DataSetArn:
+    Value: !GetAtt QuickSightDataSet.Arn
+    Description: "ARN of the QuickSight Dataset"
+  DashboardArn:
+    Value: !GetAtt QuickSightDashboard.Arn
+    Description: "ARN of the QuickSight Dashboard"
