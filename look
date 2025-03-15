@@ -25,7 +25,7 @@ Resources:
         AthenaParameters:
           WorkGroup: "primary" # Adjust if using a custom workgroup
 
-  # QuickSight Dataset with Corrected PhysicalTableMap
+  # QuickSight Dataset
   QuickSightDataSet:
     Type: AWS::QuickSight::DataSet
     DependsOn: QuickSightAthenaDataSource
@@ -36,7 +36,7 @@ Resources:
       PhysicalTableMap:
         AthenaTable:
           CustomSql:
-            DataSourceArn: !GetAtt QuickSightAthenaDataSource.Arn # Correct key name
+            DataSourceArn: !GetAtt QuickSightAthenaDataSource.Arn
             Name: "athena_custom_sql"
             SqlQuery: !Sub |
               SELECT app_name, event_time, event_count 
@@ -65,7 +65,7 @@ Resources:
               - "App2"
       ImportMode: "DIRECT_QUERY"
 
-  # QuickSight Dashboard with Controls
+  # QuickSight Dashboard with Corrected Definition
   QuickSightDashboard:
     Type: AWS::QuickSight::Dashboard
     DependsOn: QuickSightDataSet
@@ -74,9 +74,9 @@ Resources:
       DashboardId: "athena-table-dashboard"
       Name: "AthenaTableDashboard"
       Definition:
-        DataSetIdentifiers:
-          athenaDataset:
-            DataSetArn: !GetAtt QuickSightDataSet.Arn
+        DataSetIdentifierDeclarations: # Updated from DataSetIdentifiers
+          - DataSetArn: !GetAtt QuickSightDataSet.Arn
+            Identifier: "athenaDataset"
         Sheets:
           - SheetId: "sheet1"
             Name: "App Event Data"
