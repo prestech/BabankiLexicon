@@ -1,140 +1,39 @@
-AWSTemplateFormatVersion: "2010-09-09"
-Description: "QuickSight Dashboard with Athena dataset using DataSetParameters and table visual"
-
-Parameters:
-  AthenaDatabaseName:
-    Type: String
-    Description: "Name of the Athena database"
-  AthenaTableName:
-    Type: String
-    Description: "Name of the Athena table"
-  S3QueryResultsBucket:
-    Type: String
-    Description: "S3 bucket for Athena query results"
-
-Resources:
-  # QuickSight Data Source (Athena with IAM auth)
-  QuickSightAthenaDataSource:
-    Type: AWS::QuickSight::DataSource
-    Properties:
-      AwsAccountId: !Ref AWS::AccountId
-      DataSourceId: "athena-datasource"
-      Name: "AthenaDataSource"
-      Type: "ATHENA"
-      DataSourceParameters:
-        AthenaParameters:
-          WorkGroup: "primary" # Adjust if using a custom workgroup
-
-  # QuickSight Dataset
-  QuickSightDataSet:
-    Type: AWS::QuickSight::DataSet
-    DependsOn: QuickSightAthenaDataSource
-    Properties:
-      AwsAccountId: !Ref AWS::AccountId
-      DataSetId: "athena-parameterized-dataset"
-      Name: "AthenaParameterizedDataSet"
-      PhysicalTableMap:
-        AthenaTable:
-          CustomSql:
-            DataSourceArn: !GetAtt QuickSightAthenaDataSource.Arn
-            Name: "athena_custom_sql"
-            SqlQuery: !Sub |
-              SELECT app_name, event_time, event_count 
-              FROM ${AthenaDatabaseName}.${AthenaTableName} 
-              WHERE event_time <= '{{#endtime}}' 
-              AND app_name IN ({{#appNameList}}) 
-              LIMIT 100
-            Columns:
-              - Name: "app_name"
-                Type: "STRING"
-              - Name: "event_time"
-                Type: "DATETIME"
-              - Name: "event_count"
-                Type: "INTEGER"
-      DataSetParameters:
-        - Name: "endtime"
-          ParameterValueType: "DATETIME"
-          DefaultValues:
-            StaticValues:
-              - "2025-03-15 23:59:59"
-        - Name: "appNameList"
-          ParameterValueType: "MULTI_VALUED_STRING"
-          DefaultValues:
-            StaticValues:
-              - "App1"
-              - "App2"
-      ImportMode: "DIRECT_QUERY"
-
-  # QuickSight Dashboard with Corrected Definition
-  QuickSightDashboard:
-    Type: AWS::QuickSight::Dashboard
-    DependsOn: QuickSightDataSet
-    Properties:
-      AwsAccountId: !Ref AWS::AccountId
-      DashboardId: "athena-table-dashboard"
-      Name: "AthenaTableDashboard"
-      Definition:
-        DataSetIdentifierDeclarations: # Updated from DataSetIdentifiers
-          - DataSetArn: !GetAtt QuickSightDataSet.Arn
-            Identifier: "athenaDataset"
-        Sheets:
-          - SheetId: "sheet1"
-            Name: "App Event Data"
-            Visuals:
-              - TableVisual:
-                  VisualId: "table-visual-1"
-                  Title:
-                    FormatText:
-                      PlainText: "App Event Table"
-                  ChartConfiguration:
-                    FieldWells:
-                      TableAggregatedFieldWells:
-                        Values:
-                          - CategoricalDimensionField:
-                              Column:
-                                DataSetIdentifier: "athenaDataset"
-                                ColumnName: "app_name"
-                          - DateDimensionField:
-                              Column:
-                                DataSetIdentifier: "athenaDataset"
-                                ColumnName: "event_time"
-                          - NumericalDimensionField:
-                              Column:
-                                DataSetIdentifier: "athenaDataset"
-                                ColumnName: "event_count"
-                    SortConfiguration:
-                      RowSort:
-                        - FieldSort:
-                            FieldId: "event_time"
-                            Direction: "DESC"
-                    TableOptions:
-                      Orientation: "VERTICAL"
-                      HeaderStyle:
-                        Visibility: "VISIBLE"
-                        FontConfiguration:
-                          FontSize:
-                            Relative: "MEDIUM"
-                  Actions: []
-        FilterGroups: []
-        Parameters:
-          DateTimeParameters:
-            - Name: "endtime"
-              Values:
-                - "2025-03-15 23:59:59"
-          StringParameters:
-            - Name: "appNameList"
-              Values:
-                - "App1"
-                - "App2"
-      VersionDescription: "v1"
-
-Outputs:
-  DataSourceArn:
-    Value: !GetAtt QuickSightAthenaDataSource.Arn
-    Description: "ARN of the QuickSight Athena Data Source"
-  DataSetArn:
-    Value: !GetAtt QuickSightDataSet.Arn
-    Description: "ARN of the QuickSight Dataset"
-  DashboardArn:
-    Value: !GetAtt QuickSightDashboard.Arn
-    Description: "ARN of the QuickSight Dashboard"
+def resolve_relationships(tdoc, block, block_map=None, depth=0, visited=None):
+    """
+    Recursively resolve relationships for a given block in a TDocument.
+    
+    Args:
+        tdoc (TDocument): The parsed Textract document.
+        block (TBlock): The current block to process.
+        block_map (dict, optional): A map of block IDs to TBlock objects for quick lookup.
+        depth (int): Recursion depth for indentation (debugging).
+        visited (set, optional): Set of block IDs to prevent infinite loops.
+    
+    Returns:
+        list: A list of dictionaries containing block details and their resolved relationships.
+    """
+    if block_map is None:
+        block_map = {b.id: b for b in tdoc.blocks}  # Create a map of all blocks
+    
+    if visited is None:
+        visited = set()  # Track visited blocks to avoid cycles
+    
+    if block.id in visited:
+        return []  # Avoid infinite recursion
+    
+    visited.add(block.id)
+    result = {
+        "block_type": block.block_type,
+        "text": block.text if block.text else None,
+        "confidence": block.confidence,
+        "geometry": block.geometry,
+        "children": []
+    }
+    
+    # Get related blocks (e.g., CHILD relationships)
+    related_blocks = tdoc.get_relationships_for_block(block)
+    for rel_block in related_blocks:
+        child_data = resolve_relationships(tdoc, rel_block, block_map, depth + 1, visited)
+        result["children"].append(child_data)
+    
+    return [result]
