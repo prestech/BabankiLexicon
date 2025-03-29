@@ -1,39 +1,118 @@
-def resolve_relationships(tdoc, block, block_map=None, depth=0, visited=None):
+import boto3
+from datetime import datetime, timedelta
+
+def get_api_gateway_logs(api_id, stage_name, region='us-east-1', time_range_hours=24):
     """
-    Recursively resolve relationships for a given block in a TDocument.
+    Print logs from the CloudWatch log group associated with an API Gateway stage.
     
-    Args:
-        tdoc (TDocument): The parsed Textract document.
-        block (TBlock): The current block to process.
-        block_map (dict, optional): A map of block IDs to TBlock objects for quick lookup.
-        depth (int): Recursion depth for indentation (debugging).
-        visited (set, optional): Set of block IDs to prevent infinite loops.
-    
-    Returns:
-        list: A list of dictionaries containing block details and their resolved relationships.
+    Parameters:
+    - api_id: The ID of the API Gateway REST API
+    - stage_name: The name of the stage
+    - region: AWS region (default: 'us-east-1')
+    - time_range_hours: How many hours back to fetch logs (default: 24)
     """
-    if block_map is None:
-        block_map = {b.id: b for b in tdoc.blocks}  # Create a map of all blocks
+    # Create CloudWatch Logs client
+    logs_client = boto3.client('logs', region_name=region)
     
-    if visited is None:
-        visited = set()  # Track visited blocks to avoid cycles
+    # Construct the default log group name
+    log_group_name = f"/aws/apigateway/{api_id}/{stage_name}"
     
-    if block.id in visited:
-        return []  # Avoid infinite recursion
+    # Calculate time range (last 24 hours by default)
+    end_time = datetime.now()
+    start_time = end_time - timedelta(hours=time_range_hours)
     
-    visited.add(block.id)
-    result = {
-        "block_type": block.block_type,
-        "text": block.text if block.text else None,
-        "confidence": block.confidence,
-        "geometry": block.geometry,
-        "children": []
-    }
+    try:
+        # Get log streams
+        streams_response = logs_client.describe_log_streams(
+            logGroupName=log_group_name,
+            orderBy='LastEventTime',
+            descending=True,
+            limit=10  # Get the 10 most recent streams
+        )
+        
+        if 'logStreams' not in streams_response or not streams_response['logStreams']:
+            print(f"No log streams found in log group: {log_group_name}")
+            return
+            
+        print(f"\nFetching logs from {log_group_name}")
+        print(f"Time range: {start_time} to {end_time}")
+        print("-" * 80)
+        
+        # Iterate through log streams
+        for stream in streams_response['logStreams']:
+            stream_name = stream['logStreamName']
+            
+            # Get log events from each stream
+            events_response = logs_client.get_log_events(
+                logGroupName=log_group_name,
+                logStreamName=stream_name,
+                startTime=int(start_time.timestamp() * 1000),  # Convert to milliseconds
+                endTime=int(end_time.timestamp() * 1000),
+                limit=100  # Adjust as needed
+            )
+            
+            if 'events' in events_response and events_response['events']:
+                print(f"\nLog Stream: {stream_name}")
+                print("-" * 40)
+                
+                for event in events_response['events']:
+                    timestamp = datetime.fromtimestamp(event['timestamp'] / 1000)
+                    message = event['message'].strip()
+                    print(f"[{timestamp}] {message}")
+        
+        print("-" * 80)
+        
+    except logs_client.exceptions.ResourceNotFoundException:
+        print(f"Log group {log_group_name} not found")
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
+def get_logs_with_filter(api_id, stage_name, filter_pattern, region='us-east-1', time_range_hours=24):
+    """
+    Print logs using a filter pattern.
     
-    # Get related blocks (e.g., CHILD relationships)
-    related_blocks = tdoc.get_relationships_for_block(block)
-    for rel_block in related_blocks:
-        child_data = resolve_relationships(tdoc, rel_block, block_map, depth + 1, visited)
-        result["children"].append(child_data)
+    Parameters:
+    - filter_pattern: CloudWatch Logs filter pattern (e.g., "ERROR" to find error messages)
+    """
+    logs_client = boto3.client('logs', region_name=region)
+    log_group_name = f"/aws/apigateway/{api_id}/{stage_name}"
     
-    return [result]
+    end_time = int(datetime.now().timestamp() * 1000)
+    start_time = int((datetime.now() - timedelta(hours=time_range_hours)).timestamp() * 1000)
+    
+    try:
+        response = logs_client.filter_log_events(
+            logGroupName=log_group_name,
+            startTime=start_time,
+            endTime=end_time,
+            filterPattern=filter_pattern,
+            limit=100  # Adjust as needed
+        )
+        
+        if 'events' not in response or not response['events']:
+            print(f"No logs matching filter '{filter_pattern}' found in {log_group_name}")
+            return
+            
+        print(f"\nFiltered logs from {log_group_name} (Pattern: {filter_pattern})")
+        print("-" * 80)
+        
+        for event in response['events']:
+            timestamp = datetime.fromtimestamp(event['timestamp'] / 1000)
+            message = event['message'].strip()
+            print(f"[{timestamp}] {message}")
+            
+        print("-" * 80)
+        
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
+if __name__ == "__main__":
+    # Example usage
+    api_id = 'your_api_id'
+    stage_name = 'prod'
+    
+    # Get all recent logs
+    get_api_gateway_logs(api_id, stage_name, 'us-east-1', time_range_hours=24)
+    
+    # Get logs with specific filter (e.g., only ERROR messages)
+    # get_logs_with_filter(api_id, stage_name, 'ERROR', 'us-east-1', time_range_hours=24)
