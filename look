@@ -1,118 +1,59 @@
-import boto3
-from datetime import datetime, timedelta
-
-def get_api_gateway_logs(api_id, stage_name, region='us-east-1', time_range_hours=24):
+def execute_athena_msk_repair(table_name: str, database: str, output_location: str, region: str = 'us-east-1') -> str:
     """
-    Print logs from the CloudWatch log group associated with an API Gateway stage.
+    Execute MSCK REPAIR TABLE on an Athena table.
     
     Parameters:
-    - api_id: The ID of the API Gateway REST API
-    - stage_name: The name of the stage
-    - region: AWS region (default: 'us-east-1')
-    - time_range_hours: How many hours back to fetch logs (default: 24)
+    - table_name: Name of the table to repair
+    - database: Athena database name
+    - output_location: S3 URI for query results (e.g., "s3://my-bucket/athena-results/")
+    - region: AWS region
+    
+    Returns:
+    - Query execution ID
     """
-    # Create CloudWatch Logs client
-    logs_client = boto3.client('logs', region_name=region)
+    # Initialize Athena client
+    athena_client = boto3.client('athena', region_name=region)
     
-    # Construct the default log group name
-    log_group_name = f"/aws/apigateway/{api_id}/{stage_name}"
-    
-    # Calculate time range (last 24 hours by default)
-    end_time = datetime.now()
-    start_time = end_time - timedelta(hours=time_range_hours)
+    # Construct the MSCK REPAIR TABLE query
+    query = f"MSCK REPAIR TABLE {table_name}"
     
     try:
-        # Get log streams
-        streams_response = logs_client.describe_log_streams(
-            logGroupName=log_group_name,
-            orderBy='LastEventTime',
-            descending=True,
-            limit=10  # Get the 10 most recent streams
+        # Start the query execution
+        response = athena_client.start_query_execution(
+            QueryString=query,
+            QueryExecutionContext={
+                'Database': database
+            },
+            ResultConfiguration={
+                'OutputLocation': output_location
+            }
         )
+        query_execution_id = response['QueryExecutionId']
+        print(f"Started MSCK REPAIR TABLE with execution ID: {query_execution_id}")
         
-        if 'logStreams' not in streams_response or not streams_response['logStreams']:
-            print(f"No log streams found in log group: {log_group_name}")
-            return
+        # Wait for the query to complete
+        while True:
+            query_status = athena_client.get_query_execution(QueryExecutionId=query_execution_id)
+            state = query_status['QueryExecution']['Status']['State']
             
-        print(f"\nFetching logs from {log_group_name}")
-        print(f"Time range: {start_time} to {end_time}")
-        print("-" * 80)
+            if state in ['SUCCEEDED', 'FAILED', 'CANCELLED']:
+                break
+            print(f"Query state: {state}. Waiting...")
+            time.sleep(2)  # Poll every 2 seconds
         
-        # Iterate through log streams
-        for stream in streams_response['logStreams']:
-            stream_name = stream['logStreamName']
+        # Check final status
+        if state == 'SUCCEEDED':
+            print(f"MSCK REPAIR TABLE {table_name} succeeded")
+            return query_execution_id
+        elif state == 'FAILED':
+            reason = query_status['QueryExecution']['Status'].get('StateChangeReason', 'Unknown error')
+            raise Exception(f"Query failed: {reason}")
+        else:
+            raise Exception("Query was cancelled")
             
-            # Get log events from each stream
-            events_response = logs_client.get_log_events(
-                logGroupName=log_group_name,
-                logStreamName=stream_name,
-                startTime=int(start_time.timestamp() * 1000),  # Convert to milliseconds
-                endTime=int(end_time.timestamp() * 1000),
-                limit=100  # Adjust as needed
-            )
-            
-            if 'events' in events_response and events_response['events']:
-                print(f"\nLog Stream: {stream_name}")
-                print("-" * 40)
-                
-                for event in events_response['events']:
-                    timestamp = datetime.fromtimestamp(event['timestamp'] / 1000)
-                    message = event['message'].strip()
-                    print(f"[{timestamp}] {message}")
-        
-        print("-" * 80)
-        
-    except logs_client.exceptions.ResourceNotFoundException:
-        print(f"Log group {log_group_name} not found")
+    except ClientError as e:
+        print(f"Athena error: {e}")
+        raise
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
-
-def get_logs_with_filter(api_id, stage_name, filter_pattern, region='us-east-1', time_range_hours=24):
-    """
-    Print logs using a filter pattern.
-    
-    Parameters:
-    - filter_pattern: CloudWatch Logs filter pattern (e.g., "ERROR" to find error messages)
-    """
-    logs_client = boto3.client('logs', region_name=region)
-    log_group_name = f"/aws/apigateway/{api_id}/{stage_name}"
-    
-    end_time = int(datetime.now().timestamp() * 1000)
-    start_time = int((datetime.now() - timedelta(hours=time_range_hours)).timestamp() * 1000)
-    
-    try:
-        response = logs_client.filter_log_events(
-            logGroupName=log_group_name,
-            startTime=start_time,
-            endTime=end_time,
-            filterPattern=filter_pattern,
-            limit=100  # Adjust as needed
-        )
-        
-        if 'events' not in response or not response['events']:
-            print(f"No logs matching filter '{filter_pattern}' found in {log_group_name}")
-            return
-            
-        print(f"\nFiltered logs from {log_group_name} (Pattern: {filter_pattern})")
-        print("-" * 80)
-        
-        for event in response['events']:
-            timestamp = datetime.fromtimestamp(event['timestamp'] / 1000)
-            message = event['message'].strip()
-            print(f"[{timestamp}] {message}")
-            
-        print("-" * 80)
-        
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-
-if __name__ == "__main__":
-    # Example usage
-    api_id = 'your_api_id'
-    stage_name = 'prod'
-    
-    # Get all recent logs
-    get_api_gateway_logs(api_id, stage_name, 'us-east-1', time_range_hours=24)
-    
-    # Get logs with specific filter (e.g., only ERROR messages)
-    # get_logs_with_filter(api_id, stage_name, 'ERROR', 'us-east-1', time_range_hours=24)
+        print(f"Error: {e}")
+        raise
