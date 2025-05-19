@@ -1,144 +1,112 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: CloudFormation template to create an ECS Task Definition for AWS Fargate with IAM roles
+Description: CloudFormation template to create VPC endpoints for ECR (dkr, api) and S3 to enable Fargate tasks to pull images from ECR in a private VPC.
 
-# Parameters for customization
 Parameters:
-  ApplicationName:
-    Type: String
-    Description: Name of the application (used for naming resources)
-    Default: my-app
-  ContainerImage:
-    Type: String
-    Description: ECR Image URI and Tag (e.g., <account-id>.dkr.ecr.<region>.amazonaws.com/my-app:latest)
-  ContainerPort:
-    Type: Number
-    Description: Port the container listens on
-    Default: 80
-  ContainerCpu:
-    Type: String
-    Description: CPU units for the container (e.g., 256 for 0.25 vCPU)
-    Default: '256'
-    AllowedValues: ['256', '512', '1024', '2048', '4096']
-  ContainerMemory:
-    Type: String
-    Description: Memory in MiB for the container
-    Default: '512'
-    AllowedValues: ['512', '1024', '2048', '4096', '8192']
   VpcId:
     Type: AWS::EC2::VPC::Id
-    Description: VPC ID for the Fargate task
+    Description: ID of the existing VPC where the endpoints will be created
   SubnetIds:
     Type: List<AWS::EC2::Subnet::Id>
-    Description: Subnet IDs for the Fargate task
-  SecurityGroupIds:
-    Type: List<AWS::EC2::SecurityGroup::Id>
-    Description: Security Group IDs for the Fargate task
+    Description: List of subnet IDs for the Interface VPC endpoints (select at least one private subnet)
+  RouteTableIds:
+    Type: List<AWS::EC2::RouteTable::Id>
+    Description: List of route table IDs for the private subnets to associate with the S3 Gateway endpoint
 
-# Resources to be created
 Resources:
-  # Task Execution Role for ECS to pull images and send logs
-  TaskExecutionRole:
-    Type: AWS::IAM::Role
+  # Security Group for Interface VPC Endpoints (ECR dkr and api)
+  VpcEndpointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
     Properties:
-      RoleName: !Sub '${ApplicationName}-ecs-execution-role'
-      AssumeRolePolicyDocument:
+      GroupDescription: Security group for ECR VPC endpoints to allow HTTPS traffic
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0 # Allows HTTPS from within the VPC; restrict to specific CIDR if needed
+      Tags:
+        - Key: Name
+          Value: ecr-vpc-endpoint-sg
+
+  # Interface VPC Endpoint for ECR Docker (dkr)
+  EcrDkrVpcEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VpcId
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.dkr
+      VpcEndpointType: Interface
+      SubnetIds: !Ref SubnetIds
+      SecurityGroupIds:
+        - !GetAtt VpcEndpointSecurityGroup.GroupId
+      PrivateDnsEnabled: true
+      PolicyDocument:
         Version: '2012-10-17'
         Statement:
           - Effect: Allow
-            Principal:
-              Service: ecs-tasks.amazonaws.com
-            Action: 'sts:AssumeRole'
-      ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
-      Policies:
-        - PolicyName: ECRAndLogsAccess
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 'ecr:GetAuthorizationToken'
-                  - 'ecr:BatchCheckLayerAvailability'
-                  - 'ecr:GetDownloadUrlForLayer'
-                  - 'ecr:BatchGetImage'
-                  - 'logs:CreateLogStream'
-                  - 'logs:PutLogEvents'
-                Resource: '*'
+            Principal: '*'
+            Action:
+              - ecr:BatchGetImage
+              - ecr:GetDownloadUrlForLayer
+              - ecr:BatchCheckLayerAvailability
+            Resource: '*'
+      Tags:
+        - Key: Name
+          Value: ecr-dkr-vpc-endpoint
 
-  # Task Role for the container to access AWS services
-  TaskRole:
-    Type: AWS::IAM::Role
+  # Interface VPC Endpoint for ECR API
+  EcrApiVpcEndpoint:
+    Type: AWS::EC2::VPCEndpoint
     Properties:
-      RoleName: !Sub '${ApplicationName}-ecs-task-role'
-      AssumeRolePolicyDocument:
+      VpcId: !Ref VpcId
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.api
+      VpcEndpointType: Interface
+      SubnetIds: !Ref SubnetIds
+      SecurityGroupIds:
+        - !GetAtt VpcEndpointSecurityGroup.GroupId
+      PrivateDnsEnabled: true
+      PolicyDocument:
         Version: '2012-10-17'
         Statement:
           - Effect: Allow
-            Principal:
-              Service: ecs-tasks.amazonaws.com
-            Action: 'sts:AssumeRole'
-            Condition:
-              ArnLike:
-                aws:SourceArn: !Sub 'arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:*'
-              StringEquals:
-                aws:SourceAccount: !Ref AWS::AccountId
-      Policies:
-        - PolicyName: ApplicationPermissions
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 's3:GetObject'
-                  - 's3:ListBucket'
-                Resource:
-                  - 'arn:aws:s3:::my-app-bucket/*'
-                  - 'arn:aws:s3:::my-app-bucket'
+            Principal: '*'
+            Action:
+              - ecr:GetAuthorizationToken
+            Resource: '*'
+      Tags:
+        - Key: Name
+          Value: ecr-api-vpc-endpoint
 
-  # CloudWatch Log Group for container logs
-  LogGroup:
-    Type: AWS::Logs::LogGroup
+  # Gateway VPC Endpoint for S3
+  S3VpcEndpoint:
+    Type: AWS::EC2::VPCEndpoint
     Properties:
-      LogGroupName: !Sub '/ecs/${ApplicationName}'
-      RetentionInDays: 7
+      VpcId: !Ref VpcId
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      VpcEndpointType: Gateway
+      RouteTableIds: !Ref RouteTableIds
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action:
+              - s3:GetObject
+              - s3:ListBucket
+            Resource: '*'
+      Tags:
+        - Key: Name
+          Value: s3-vpc-endpoint
 
-  # ECS Task Definition for Fargate
-  TaskDefinition:
-    Type: AWS::ECS::TaskDefinition
-    Properties:
-      Family: !Sub '${ApplicationName}-task'
-      Cpu: !Ref ContainerCpu
-      Memory: !Ref ContainerMemory
-      NetworkMode: awsvpc
-      RequiresCompatibilities:
-        - FARGATE
-      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
-      TaskRoleArn: !GetAtt TaskRole.Arn
-      ContainerDefinitions:
-        - Name: !Ref ApplicationName
-          Image: !Ref ContainerImage
-          Cpu: !Ref ContainerCpu
-          Memory: !Ref ContainerMemory
-          PortMappings:
-            - ContainerPort: !Ref ContainerPort
-              Protocol: tcp
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Ref LogGroup
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: ecs
-      RuntimePlatform:
-        OperatingSystemFamily: LINUX
-
-# Outputs for reference
 Outputs:
-  TaskDefinitionArn:
-    Description: ARN of the ECS Task Definition
-    Value: !Ref TaskDefinition
-  TaskExecutionRoleArn:
-    Description: ARN of the Task Execution Role
-    Value: !GetAtt TaskExecutionRole.Arn
-  TaskRoleArn:
-    Description: ARN of the Task Role
-    Value: !GetAtt TaskRole.Arn
+  EcrDkrVpcEndpointId:
+    Description: ID of the ECR Docker VPC endpoint
+    Value: !Ref EcrDkrVpcEndpoint
+  EcrApiVpcEndpointId:
+    Description: ID of the ECR API VPC endpoint
+    Value: !Ref EcrApiVpcEndpoint
+  S3VpcEndpointId:
+    Description: ID of the S3 Gateway VPC endpoint
+    Value: !Ref S3VpcEndpoint
+  SecurityGroupId:
+    Description: ID of the security group for ECR VPC endpoints
+    Value: !GetAtt VpcEndpointSecurityGroup.GroupId
