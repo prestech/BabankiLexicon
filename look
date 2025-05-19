@@ -1,59 +1,144 @@
-def execute_athena_msk_repair(table_name: str, database: str, output_location: str, region: str = 'us-east-1') -> str:
-    """
-    Execute MSCK REPAIR TABLE on an Athena table.
-    
-    Parameters:
-    - table_name: Name of the table to repair
-    - database: Athena database name
-    - output_location: S3 URI for query results (e.g., "s3://my-bucket/athena-results/")
-    - region: AWS region
-    
-    Returns:
-    - Query execution ID
-    """
-    # Initialize Athena client
-    athena_client = boto3.client('athena', region_name=region)
-    
-    # Construct the MSCK REPAIR TABLE query
-    query = f"MSCK REPAIR TABLE {table_name}"
-    
-    try:
-        # Start the query execution
-        response = athena_client.start_query_execution(
-            QueryString=query,
-            QueryExecutionContext={
-                'Database': database
-            },
-            ResultConfiguration={
-                'OutputLocation': output_location
-            }
-        )
-        query_execution_id = response['QueryExecutionId']
-        print(f"Started MSCK REPAIR TABLE with execution ID: {query_execution_id}")
-        
-        # Wait for the query to complete
-        while True:
-            query_status = athena_client.get_query_execution(QueryExecutionId=query_execution_id)
-            state = query_status['QueryExecution']['Status']['State']
-            
-            if state in ['SUCCEEDED', 'FAILED', 'CANCELLED']:
-                break
-            print(f"Query state: {state}. Waiting...")
-            time.sleep(2)  # Poll every 2 seconds
-        
-        # Check final status
-        if state == 'SUCCEEDED':
-            print(f"MSCK REPAIR TABLE {table_name} succeeded")
-            return query_execution_id
-        elif state == 'FAILED':
-            reason = query_status['QueryExecution']['Status'].get('StateChangeReason', 'Unknown error')
-            raise Exception(f"Query failed: {reason}")
-        else:
-            raise Exception("Query was cancelled")
-            
-    except ClientError as e:
-        print(f"Athena error: {e}")
-        raise
-    except Exception as e:
-        print(f"Error: {e}")
-        raise
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template to create an ECS Task Definition for AWS Fargate with IAM roles
+
+# Parameters for customization
+Parameters:
+  ApplicationName:
+    Type: String
+    Description: Name of the application (used for naming resources)
+    Default: my-app
+  ContainerImage:
+    Type: String
+    Description: ECR Image URI and Tag (e.g., <account-id>.dkr.ecr.<region>.amazonaws.com/my-app:latest)
+  ContainerPort:
+    Type: Number
+    Description: Port the container listens on
+    Default: 80
+  ContainerCpu:
+    Type: String
+    Description: CPU units for the container (e.g., 256 for 0.25 vCPU)
+    Default: '256'
+    AllowedValues: ['256', '512', '1024', '2048', '4096']
+  ContainerMemory:
+    Type: String
+    Description: Memory in MiB for the container
+    Default: '512'
+    AllowedValues: ['512', '1024', '2048', '4096', '8192']
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC ID for the Fargate task
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Subnet IDs for the Fargate task
+  SecurityGroupIds:
+    Type: List<AWS::EC2::SecurityGroup::Id>
+    Description: Security Group IDs for the Fargate task
+
+# Resources to be created
+Resources:
+  # Task Execution Role for ECS to pull images and send logs
+  TaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ApplicationName}-ecs-execution-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
+      Policies:
+        - PolicyName: ECRAndLogsAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ecr:GetAuthorizationToken'
+                  - 'ecr:BatchCheckLayerAvailability'
+                  - 'ecr:GetDownloadUrlForLayer'
+                  - 'ecr:BatchGetImage'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: '*'
+
+  # Task Role for the container to access AWS services
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ApplicationName}-ecs-task-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Sub 'arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:*'
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+      Policies:
+        - PolicyName: ApplicationPermissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:GetObject'
+                  - 's3:ListBucket'
+                Resource:
+                  - 'arn:aws:s3:::my-app-bucket/*'
+                  - 'arn:aws:s3:::my-app-bucket'
+
+  # CloudWatch Log Group for container logs
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/ecs/${ApplicationName}'
+      RetentionInDays: 7
+
+  # ECS Task Definition for Fargate
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub '${ApplicationName}-task'
+      Cpu: !Ref ContainerCpu
+      Memory: !Ref ContainerMemory
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
+      TaskRoleArn: !GetAtt TaskRole.Arn
+      ContainerDefinitions:
+        - Name: !Ref ApplicationName
+          Image: !Ref ContainerImage
+          Cpu: !Ref ContainerCpu
+          Memory: !Ref ContainerMemory
+          PortMappings:
+            - ContainerPort: !Ref ContainerPort
+              Protocol: tcp
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+      RuntimePlatform:
+        OperatingSystemFamily: LINUX
+
+# Outputs for reference
+Outputs:
+  TaskDefinitionArn:
+    Description: ARN of the ECS Task Definition
+    Value: !Ref TaskDefinition
+  TaskExecutionRoleArn:
+    Description: ARN of the Task Execution Role
+    Value: !GetAtt TaskExecutionRole.Arn
+  TaskRoleArn:
+    Description: ARN of the Task Role
+    Value: !GetAtt TaskRole.Arn
