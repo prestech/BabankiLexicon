@@ -1,10 +1,10 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: CloudFormation template to launch a Windows EC2 instance with Apache JMeter, Java, and Google Chrome installed.
+Description: CloudFormation template to launch a Windows EC2 instance in an existing VPC and subnet with no public IP, with Apache JMeter, Java, and Google Chrome installed.
 
 Parameters:
   KeyName:
     Type: AWS::EC2::KeyPair::KeyName
-    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Description: Name of an existing EC2 KeyPair to enable RDP access to the instance
     ConstraintDescription: Must be the name of an existing EC2 KeyPair.
 
   InstanceType:
@@ -16,24 +16,58 @@ Parameters:
       - t3.large
     ConstraintDescription: Must be a valid EC2 instance type.
 
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: ID of the existing VPC (e.g., vpc-12345678)
+    ConstraintDescription: Must be a valid VPC ID.
+
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: ID of the existing subnet in the VPC (e.g., subnet-12345678)
+    ConstraintDescription: Must be a valid subnet ID in the specified VPC.
+
   LatestWindowsAmiId:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base
     Description: Latest Windows Server 2019 AMI
 
 Resources:
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable RDP and JMeter ports within VPC
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3389
+          ToPort: 3389
+          CidrIp: 0.0.0.0/0
+          Description: Allow RDP access
+        - IpProtocol: tcp
+          FromPort: 1099
+          ToPort: 1099
+          CidrIp: 0.0.0.0/0
+          Description: Allow JMeter RMI port
+        - IpProtocol: tcp
+          FromPort: 50000
+          ToPort: 50000
+          CidrIp: 0.0.0.0/0
+          Description: Allow JMeter server port
+
   EC2Instance:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: !Ref InstanceType
       ImageId: !Ref LatestWindowsAmiId
       KeyName: !Ref KeyName
+      SubnetId: !Ref SubnetId
+      AssociatePublicIpAddress: false
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
             VolumeSize: 50
             VolumeType: gp3
-      SecurityGroups:
+      SecurityGroupIds:
         - !Ref InstanceSecurityGroup
       UserData:
         Fn::Base64: !Sub |
@@ -63,36 +97,10 @@ Resources:
         - Key: Name
           Value: Windows-JMeter-Instance
 
-  InstanceSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Enable RDP and HTTP access
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 3389
-          ToPort: 3389
-          CidrIp: 0.0.0.0/0
-          Description: Allow RDP access
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-          Description: Allow HTTP access for JMeter
-        - IpProtocol: tcp
-          FromPort: 1099
-          ToPort: 1099
-          CidrIp: 0.0.0.0/0
-          Description: Allow JMeter RMI port
-        - IpProtocol: tcp
-          FromPort: 50000
-          ToPort: 50000
-          CidrIp: 0.0.0.0/0
-          Description: Allow JMeter server port
-
 Outputs:
   InstanceId:
     Description: Instance ID of the EC2 instance
     Value: !Ref EC2Instance
-  PublicIP:
-    Description: Public IP address of the EC2 instance
-    Value: !GetAtt EC2Instance.PublicIp
+  PrivateIP:
+    Description: Private IP address of the EC2 instance
+    Value: !GetAtt EC2Instance.PrivateIp
