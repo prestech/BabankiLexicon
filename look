@@ -1,112 +1,98 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: CloudFormation template to create VPC endpoints for ECR (dkr, api) and S3 to enable Fargate tasks to pull images from ECR in a private VPC.
+Description: CloudFormation template to launch a Windows EC2 instance with Apache JMeter, Java, and Google Chrome installed.
 
 Parameters:
-  VpcId:
-    Type: AWS::EC2::VPC::Id
-    Description: ID of the existing VPC where the endpoints will be created
-  SubnetIds:
-    Type: List<AWS::EC2::Subnet::Id>
-    Description: List of subnet IDs for the Interface VPC endpoints (select at least one private subnet)
-  RouteTableIds:
-    Type: List<AWS::EC2::RouteTable::Id>
-    Description: List of route table IDs for the private subnets to associate with the S3 Gateway endpoint
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    ConstraintDescription: Must be the name of an existing EC2 KeyPair.
+
+  InstanceType:
+    Type: String
+    Default: r5.xlarge
+    Description: EC2 instance type (r5.xlarge for 32GB RAM, as t3.large only supports 8GB)
+    AllowedValues:
+      - r5.xlarge
+      - t3.large
+    ConstraintDescription: Must be a valid EC2 instance type.
+
+  LatestWindowsAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base
+    Description: Latest Windows Server 2019 AMI
 
 Resources:
-  # Security Group for Interface VPC Endpoints (ECR dkr and api)
-  VpcEndpointSecurityGroup:
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !Ref LatestWindowsAmiId
+      KeyName: !Ref KeyName
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 50
+            VolumeType: gp3
+      SecurityGroups:
+        - !Ref InstanceSecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          <powershell>
+          # Set execution policy
+          Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned -Force
+
+          # Install Chocolatey package manager
+          Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+
+          # Install Java (OpenJDK)
+          choco install openjdk11 -y
+
+          # Install Google Chrome
+          choco install googlechrome -y
+
+          # Install Apache JMeter
+          choco install jmeter -y
+
+          # Configure Windows Firewall to allow JMeter traffic
+          New-NetFirewallRule -DisplayName "Allow JMeter" -Direction Inbound -Program "C:\ProgramData\chocolatey\lib\jmeter\tools\apache-jmeter-5.6.3\bin\jmeter.bat" -Action Allow -Enabled True
+
+          # Restart to ensure all installations take effect
+          Restart-Computer -Force
+          </powershell>
+      Tags:
+        - Key: Name
+          Value: Windows-JMeter-Instance
+
+  InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security group for ECR VPC endpoints to allow HTTPS traffic
-      VpcId: !Ref VpcId
+      GroupDescription: Enable RDP and HTTP access
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 0.0.0.0/0 # Allows HTTPS from within the VPC; restrict to specific CIDR if needed
-      Tags:
-        - Key: Name
-          Value: ecr-vpc-endpoint-sg
-
-  # Interface VPC Endpoint for ECR Docker (dkr)
-  EcrDkrVpcEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      VpcId: !Ref VpcId
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.dkr
-      VpcEndpointType: Interface
-      SubnetIds: !Ref SubnetIds
-      SecurityGroupIds:
-        - !GetAtt VpcEndpointSecurityGroup.GroupId
-      PrivateDnsEnabled: true
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal: '*'
-            Action:
-              - ecr:BatchGetImage
-              - ecr:GetDownloadUrlForLayer
-              - ecr:BatchCheckLayerAvailability
-            Resource: '*'
-      Tags:
-        - Key: Name
-          Value: ecr-dkr-vpc-endpoint
-
-  # Interface VPC Endpoint for ECR API
-  EcrApiVpcEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      VpcId: !Ref VpcId
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.api
-      VpcEndpointType: Interface
-      SubnetIds: !Ref SubnetIds
-      SecurityGroupIds:
-        - !GetAtt VpcEndpointSecurityGroup.GroupId
-      PrivateDnsEnabled: true
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal: '*'
-            Action:
-              - ecr:GetAuthorizationToken
-            Resource: '*'
-      Tags:
-        - Key: Name
-          Value: ecr-api-vpc-endpoint
-
-  # Gateway VPC Endpoint for S3
-  S3VpcEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      VpcId: !Ref VpcId
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
-      VpcEndpointType: Gateway
-      RouteTableIds: !Ref RouteTableIds
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal: '*'
-            Action:
-              - s3:GetObject
-              - s3:ListBucket
-            Resource: '*'
-      Tags:
-        - Key: Name
-          Value: s3-vpc-endpoint
+          FromPort: 3389
+          ToPort: 3389
+          CidrIp: 0.0.0.0/0
+          Description: Allow RDP access
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: Allow HTTP access for JMeter
+        - IpProtocol: tcp
+          FromPort: 1099
+          ToPort: 1099
+          CidrIp: 0.0.0.0/0
+          Description: Allow JMeter RMI port
+        - IpProtocol: tcp
+          FromPort: 50000
+          ToPort: 50000
+          CidrIp: 0.0.0.0/0
+          Description: Allow JMeter server port
 
 Outputs:
-  EcrDkrVpcEndpointId:
-    Description: ID of the ECR Docker VPC endpoint
-    Value: !Ref EcrDkrVpcEndpoint
-  EcrApiVpcEndpointId:
-    Description: ID of the ECR API VPC endpoint
-    Value: !Ref EcrApiVpcEndpoint
-  S3VpcEndpointId:
-    Description: ID of the S3 Gateway VPC endpoint
-    Value: !Ref S3VpcEndpoint
-  SecurityGroupId:
-    Description: ID of the security group for ECR VPC endpoints
-    Value: !GetAtt VpcEndpointSecurityGroup.GroupId
+  InstanceId:
+    Description: Instance ID of the EC2 instance
+    Value: !Ref EC2Instance
+  PublicIP:
+    Description: Public IP address of the EC2 instance
+    Value: !GetAtt EC2Instance.PublicIp
