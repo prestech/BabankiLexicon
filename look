@@ -5,3 +5,8 @@ Select-String -Path certs.txt -Pattern "-----BEGIN CERTIFICATE-----","-----END C
     Select-Object -First 2 | 
     ForEach-Object { $_.Line; if ($_.Context.PostContext) { $_.Context.PostContext } } | 
     Out-File -Encoding ascii server_cert.pem
+
+--Step 2
+
+$pkcs12Password = "pkcs12password"
+openssl pkcs12 -export -in server_cert.pem -inkey private_key.key -out keystore.p12 -name myalias -passout pass:$pkcs12Password
