@@ -12,6 +12,10 @@ $pkcs12Password = "pkcs12password"
 openssl pkcs12 -export -in server_cert.pem -inkey private_key.key -out keystore.p12 -name myalias -passout pass:$pkcs12Password
 
 
+$pkcs12Password = "pkcs12password"
+$jksPassword = "jkspassword"
+keytool -importkeystore -srckeystore keystore.p12 -srcstoretype PKCS12 -srcstorepass $pkcs12Password -destkeystore keystore.jks -deststoretype JKS -deststorepass $jksPassword -alias myalias
+
 --step 3
 
 keytool -list -keystore keystore.jks -storepass $jksPassword
