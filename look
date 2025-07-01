@@ -1,1 +1,57 @@
 
+import jks
+from OpenSSL import crypto
+
+def create_jks(private_key_path, cert_path, keystore_path, keystore_password, alias):
+    # Load the private key (try PEM first, then DER)
+    try:
+        with open(private_key_path, 'r') as key_file:
+            private_key_pem = key_file.read()
+        private_key = crypto.load_privatekey(crypto.FILETYPE_PEM, private_key_pem)
+        print("Private key loaded as PEM")
+    except UnicodeDecodeError:
+        # If PEM fails, try DER (binary)
+        with open(private_key_path, 'rb') as key_file:
+            private_key_der = key_file.read()
+        private_key = crypto.load_privatekey(crypto.FILETYPE_ASN1, private_key_der)
+        print("Private key loaded as DER")
+
+    # Load the certificate (assuming PEM)
+    with open(cert_path, 'r') as cert_file:
+        cert_pem = cert_file.read()
+    cert = crypto.load_certificate(crypto.FILETYPE_PEM, cert_pem)
+
+    # Create a new keystore
+    keystore = jks.KeyStore.new('jks', [])
+
+    # Convert private key to PKCS8 format for JKS
+    private_key_der = crypto.dump_privatekey(crypto.FILETYPE_ASN1, private_key)
+
+    # Convert certificate to DER format
+    cert_der = crypto.dump_certificate(crypto.FILETYPE_ASN1, cert)
+
+    # Create a private key entry with the certificate chain
+    private_key_entry = jks.PrivateKeyEntry.new(
+        alias=alias,
+        certs=[cert_der],
+        key=private_key_der,
+        key_format='pkcs8'
+    )
+
+    # Add the private key entry to the keystore
+    keystore.entries[alias] = private_key_entry
+
+    # Save the keystore to a file
+    keystore.save(keystore_path, keystore_password)
+
+    print(f"JKS file created successfully at {keystore_path}")
+
+if __name__ == "__main__":
+    # Example usage
+    private_key_path = "private_key.key"  # Path to your .key file
+    cert_path = "certificate.pem"        # Path to your certificate file
+    keystore_path = "keystore.jks"       # Output JKS file path
+    keystore_password = "your_password"   # Password for the JKS file
+    alias = "myalias"                    # Alias for the key entry
+
+    create_jks(private_key_path, cert_path, keystore_path, keystore_password, alias)
