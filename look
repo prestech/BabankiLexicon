@@ -10,3 +10,8 @@ Select-String -Path certs.txt -Pattern "-----BEGIN CERTIFICATE-----","-----END C
 
 $pkcs12Password = "pkcs12password"
 openssl pkcs12 -export -in server_cert.pem -inkey private_key.key -out keystore.p12 -name myalias -passout pass:$pkcs12Password
+
+
+--step 3
+
+keytool -list -keystore keystore.jks -storepass $jksPassword
