@@ -1,18 +1,1 @@
-
-import org.slf4j.LoggerFactory;
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-
-import javax.annotation.PostConstruct;
-
-import org.springframework.stereotype.Component;
-
-@Component
-public class LoggingConfig {
-
-    @PostConstruct
-    public void configureLogging() {
-        Logger logger = (Logger) LoggerFactory.getLogger("org.springframework.cloud.function.adapter.aws");
-        logger.setLevel(Level.ERROR);
-    }
-}
+LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_CLOUD_FUNCTION_ADAPTER_AWS
