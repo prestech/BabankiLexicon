@@ -1,46 +1,28 @@
-package com.example.mule;
-
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import java.security.KeyStore;
-import java.security.PrivateKey;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
-public class JwtGenerator {
-    public String generateJwt(String consumerKey, String principal, String audience, String keyStorePath, String keyStorePassword, String keyAlias) throws Exception {
-        // Load the keystore
-        KeyStore keyStore = KeyStore.getInstance("JKS");
-        try (java.io.FileInputStream fis = new java.io.FileInputStream(keyStorePath)) {
-            keyStore.load(fis, keyStorePassword.toCharArray());
-        }
-        PrivateKey privateKey = (PrivateKey) keyStore.getKey(keyAlias, keyStorePassword.toCharArray());
-
-        // Set JWT claims
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("iss", consumerKey);
-        claims.put("sub", principal);
-        claims.put("aud", audience);
-        claims.put("exp", new Date(System.currentTimeMillis() + 120000)); // 2 minutes expiry
-
-        // Generate JWT
-        return Jwts.builder()
-                .setHeaderParam("typ", "JWT")
-                .setClaims(claims)
-                .signWith(SignatureAlgorithm.RS256, privateKey)
-                .compact();
-    }
-}
-<invoke name="GenerateJWT" class="com.example.mule.JwtGenerator" method="generateJwt" doc:name="Generate JWT">
-    <invoke:arguments>
-        #[{
-            consumerKey: '${sf.consumerKey}',
-            principal: '${sf.principal}',
-            audience: '${sf.aud}',
-            keyStorePath: '${mule.home}/apps/${app.name}/keystore.jks',
-            keyStorePassword: 'yourKeystorePassword',
-            keyAlias: 'yourCertAlias'
-        }]
-    </invoke:arguments>
-</invoke>
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns="http://www.mulesoft.org/schema/mule/core">
+    <http:listener-config name="HTTP_Listener_Configuration" host="0.0.0.0" port="8081"/>
+    <http:request-config name="HTTP_Request_Configuration" host="login.salesforce.com" port="443" protocol="HTTPS"/>
+    <flow name="salesforce-jwt-flow">
+        <http:listener config-ref="HTTP_Listener_Configuration" path="/auth"/>
+        <invoke doc:name="Generate JWT"
+                class="com.example.mule.JwtGenerator"
+                method="generateJwt(String,String,String,String,String)">
+            <invoke:arguments>
+                #[{
+                    consumerKey: '${sf.consumerKey}',
+                    principal: '${sf.principal}',
+                    audience: '${sf.aud}',
+                    keyStorePassword: '${sf.keystorePassword}',
+                    keyAlias: 'yourCertAlias'
+                }]
+            </invoke:arguments>
+        </invoke>
+        <set-variable variableName="jwtToken" value="#[payload]"/>
+        <http:request method="POST" path="/services/oauth2/token" config-ref="HTTP_Request_Configuration">
+            <http:query-params>
+                #[{'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer', 'assertion': vars.jwtToken}]
+            </http:query-params>
+        </http:request>
+        <set-variable variableName="sfToken" value="#[output application/json --- payload.access_token]"/>
+    </flow>
+</mule>
