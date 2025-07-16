@@ -1,27 +1,37 @@
 package com.example.mule;
 
-import java.io.FileInputStream;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import java.security.KeyStore;
 import java.security.PrivateKey;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
-public class KeyStoreUtil {
-    public static String getPrivateKey(String keyStorePath, String keyStorePassword, String keyAlias) throws Exception {
+public class JwtGenerator {
+    public String generateJwt(String consumerKey, String principal, String audience, String keyStorePath, String keyStorePassword, String keyAlias) throws Exception {
+        // Load the keystore
         KeyStore keyStore = KeyStore.getInstance("JKS");
-        try (FileInputStream fis = new FileInputStream(keyStorePath)) {
+        try (java.io.FileInputStream fis = new java.io.FileInputStream(keyStorePath)) {
             keyStore.load(fis, keyStorePassword.toCharArray());
         }
         PrivateKey privateKey = (PrivateKey) keyStore.getKey(keyAlias, keyStorePassword.toCharArray());
-        // Convert to PEM format (simplified; may need external library like BouncyCastle)
-        return encodeToPem(privateKey); // Implement PEM encoding or pass raw key
-    }
 
-    private static String encodeToPem(PrivateKey privateKey) {
-        // Use BouncyCastle or similar to convert PrivateKey to PEM string
-        // Simplified example (requires BouncyCastle dependency)
-        return "-----BEGIN PRIVATE KEY-----\n" + Base64.getEncoder().encodeToString(privateKey.getEncoded()) + "\n-----END PRIVATE KEY-----";
+        // Set JWT claims
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("iss", consumerKey);
+        claims.put("sub", principal);
+        claims.put("aud", audience);
+        claims.put("exp", new Date(System.currentTimeMillis() + 120000)); // 2 minutes expiry
+
+        // Generate JWT
+        return Jwts.builder()
+                .setHeaderParam("typ", "JWT")
+                .setClaims(claims)
+                .signWith(SignatureAlgorithm.RS256, privateKey)
+                .compact();
     }
 }
-
 <invoke name="GenerateJWT" class="com.example.mule.JwtGenerator" method="generateJwt" doc:name="Generate JWT">
     <invoke:arguments>
         #[{
