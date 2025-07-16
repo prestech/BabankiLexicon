@@ -21,3 +21,16 @@ public class KeyStoreUtil {
         return "-----BEGIN PRIVATE KEY-----\n" + Base64.getEncoder().encodeToString(privateKey.getEncoded()) + "\n-----END PRIVATE KEY-----";
     }
 }
+
+<invoke name="GenerateJWT" class="com.example.mule.JwtGenerator" method="generateJwt" doc:name="Generate JWT">
+    <invoke:arguments>
+        #[{
+            consumerKey: '${sf.consumerKey}',
+            principal: '${sf.principal}',
+            audience: '${sf.aud}',
+            keyStorePath: '${mule.home}/apps/${app.name}/keystore.jks',
+            keyStorePassword: 'yourKeystorePassword',
+            keyAlias: 'yourCertAlias'
+        }]
+    </invoke:arguments>
+</invoke>
