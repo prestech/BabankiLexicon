@@ -1,21 +1,23 @@
+package com.example.mule;
 
-%dw 2.0
-output application/json
-import * from jwt::RSA
----
-{
-    token: JWT(
-        {
-            "alg": "RS256",
-            "typ": "JWT"
-        },
-        {
-            iss: "${sf.consumerKey}",
-            sub: "${sf.principal}",
-            aud: "${sf.aud}",
-            exp: (now() + |PT2M|) as Number {unit: "seconds"}
-        },
-        readUrl("classpath://keystore.jks", "application/octet-stream") as String,
-        "Sha256withRSA"
-    )
+import java.io.FileInputStream;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+
+public class KeyStoreUtil {
+    public static String getPrivateKey(String keyStorePath, String keyStorePassword, String keyAlias) throws Exception {
+        KeyStore keyStore = KeyStore.getInstance("JKS");
+        try (FileInputStream fis = new FileInputStream(keyStorePath)) {
+            keyStore.load(fis, keyStorePassword.toCharArray());
+        }
+        PrivateKey privateKey = (PrivateKey) keyStore.getKey(keyAlias, keyStorePassword.toCharArray());
+        // Convert to PEM format (simplified; may need external library like BouncyCastle)
+        return encodeToPem(privateKey); // Implement PEM encoding or pass raw key
+    }
+
+    private static String encodeToPem(PrivateKey privateKey) {
+        // Use BouncyCastle or similar to convert PrivateKey to PEM string
+        // Simplified example (requires BouncyCastle dependency)
+        return "-----BEGIN PRIVATE KEY-----\n" + Base64.getEncoder().encodeToString(privateKey.getEncoded()) + "\n-----END PRIVATE KEY-----";
+    }
 }
