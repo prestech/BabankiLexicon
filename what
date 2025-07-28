@@ -1,43 +1,103 @@
-otlp "default" {
-  grpc {
-    endpoint = "0.0.0.0:4317"
-  }
-  http {
-    endpoint = "0.0.0.0:4318"
-  }
-}
-
-prometheus.exporter.datadog "datadog" {
-  api_key = env("DD_API_KEY")
-  site    = env("DD_SITE")
-}
-
-otelcol.processor.batch "default" {
-  timeout = "1s"
-  send_batch_size = 1000
-}
-
-otelcol.exporter.datadog "default" {
-  api {
-    key  = env("DD_API_KEY")
-    site = env("DD_SITE")
-  }
-}
-
-otelcol.pipeline "traces" {
-  receivers  = [otlp.default]
-  processors = [otelcol.processor.batch.default]
-  exporters  = [otelcol.exporter.datadog.default]
-}
-
-otelcol.pipeline "metrics" {
-  receivers  = [otlp.default]
-  processors = [otelcol.processor.batch.default]
-  exporters  = [otelcol.exporter.datadog.default, prometheus.exporter.datadog.datadog]
-}
-
-otelcol.pipeline "logs" {
-  receivers  = [otlp.default]
-  processors = [otelcol.processor.batch.default]
-  exporters  = [otelcol.exporter.datadog.default]
+{
+  "family": "my-app-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "my-app",
+      "image": "my-app-image:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "OTEL_EXPORTER_OTLP_ENDPOINT",
+          "value": "http://localhost:4318"
+        },
+        {
+          "name": "OTEL_EXPORTER_OTLP_PROTOCOL",
+          "value": "http"
+        },
+        {
+          "name": "OTEL_SERVICE_NAME",
+          "value": "my-app-service"
+        },
+        {
+          "name": "OTEL_RESOURCE_ATTRIBUTES",
+          "value": "service.name=my-app-service,deployment.environment=production"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/my-app",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    },
+    {
+      "name": "alloy-collector",
+      "image": "grafana/alloy:latest",
+      "essential": false,
+      "portMappings": [
+        {
+          "containerPort": 4317,
+          "hostPort": 4317,
+          "protocol": "tcp",
+          "appProtocol": "grpc"
+        },
+        {
+          "containerPort": 4318,
+          "hostPort": 4318,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "DD_API_KEY",
+          "value": "YOUR_DATADOG_API_KEY"
+        },
+        {
+          "name": "DD_SITE",
+          "value": "datadoghq.com"
+        }
+      ],
+      "command": [
+        "run",
+        "--disable-reporting",
+        "/alloy-config.river"
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/alloy-collector",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "mountPoints": [
+        {
+          "sourceVolume": "alloy-config",
+          "containerPath": "/alloy-config.river",
+          "readOnly": true
+        }
+      ]
+    }
+  ],
+  "volumes": [
+    {
+      "name": "alloy-config",
+      "host": {}
+    }
+  ]
 }
