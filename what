@@ -1,0 +1,43 @@
+otlp "default" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+}
+
+prometheus.exporter.datadog "datadog" {
+  api_key = env("DD_API_KEY")
+  site    = env("DD_SITE")
+}
+
+otelcol.processor.batch "default" {
+  timeout = "1s"
+  send_batch_size = 1000
+}
+
+otelcol.exporter.datadog "default" {
+  api {
+    key  = env("DD_API_KEY")
+    site = env("DD_SITE")
+  }
+}
+
+otelcol.pipeline "traces" {
+  receivers  = [otlp.default]
+  processors = [otelcol.processor.batch.default]
+  exporters  = [otelcol.exporter.datadog.default]
+}
+
+otelcol.pipeline "metrics" {
+  receivers  = [otlp.default]
+  processors = [otelcol.processor.batch.default]
+  exporters  = [otelcol.exporter.datadog.default, prometheus.exporter.datadog.datadog]
+}
+
+otelcol.pipeline "logs" {
+  receivers  = [otlp.default]
+  processors = [otelcol.processor.batch.default]
+  exporters  = [otelcol.exporter.datadog.default]
+}
