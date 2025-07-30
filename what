@@ -1,1 +1,53 @@
 
+from fastapi import FastAPI
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+
+# Initialize OpenTelemetry
+resource = Resource(attributes={
+    "service.name": "fastapi-service"
+})
+
+# Set up the tracer provider
+trace.set_tracer_provider(TracerProvider(resource=resource))
+
+# Configure OTLP exporter
+otlp_exporter = OTLPSpanExporter(endpoint="http://localhost:4318/v1/traces")
+span_processor = BatchSpanProcessor(otlp_exporter)
+trace.get_tracer_provider().add_span_processor(span_processor)
+
+# Initialize FastAPI app
+app = FastAPI()
+
+# Instrument FastAPI
+FastAPIInstrumentor.instrument_app(app)
+
+# Instrument HTTPX client (if your app makes HTTP requests)
+HTTPXClientInstrumentor().instrument()
+
+# Create a tracer for manual spans
+tracer = trace.get_tracer(__name__)
+
+@app.get("/")
+async def read_root():
+    # Create a manual span for custom operation
+    with tracer.start_as_current_span("custom-operation") as span:
+        span.set_attribute("custom.attribute", "example-value")
+        # Simulate some work
+        result = {"message": "Hello, World!"}
+        span.set_attribute("response.message", result["message"])
+        return result
+
+@app.get("/items/{item_id}")
+async def read_item(item_id: int):
+    with tracer.start_as_current_span("fetch-item") as span:
+        span.set_attribute("item.id", item_id)
+        # Simulate database query
+        item = {"item_id": item_id, "name": f"Item {item_id}"}
+        span.set_attribute("item.name", item["name"])
+        return item
