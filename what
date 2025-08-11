@@ -1,53 +1,36 @@
+-- Step 1: Create the custom role for MuleSoft integration
+CREATE ROLE IF NOT EXISTS mule_integration_role
+  COMMENT = 'Custom role for MuleSoft integration with specific schema access';
 
-from fastapi import FastAPI
-from opentelemetry import trace
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+-- Step 2: Grant necessary privileges to the role
+-- Replace 'my_database' and 'my_schema1', 'my_schema2' with your actual database and schema names
+GRANT USAGE ON DATABASE my_database TO ROLE mule_integration_role;
+GRANT USAGE ON SCHEMA my_database.my_schema1 TO ROLE mule_integration_role;
+GRANT USAGE ON SCHEMA my_database.my_schema2 TO ROLE mule_integration_role;
+GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA my_database.my_schema1 TO ROLE mule_integration_role;
+GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA my_database.my_schema2 TO ROLE mule_integration_role;
+-- Grant usage on warehouse for query execution (replace 'compute_wh' with your warehouse)
+GRANT USAGE ON WAREHOUSE compute_wh TO ROLE mule_integration_role;
 
-# Initialize OpenTelemetry
-resource = Resource(attributes={
-    "service.name": "fastapi-service"
-})
+-- Step 3: Create the user with public-private key authentication
+CREATE USER IF NOT EXISTS mule_integration_dev
+  LOGIN_NAME = 'MULE_INTEGRATION_DEV'
+  DISPLAY_NAME = 'MuleSoft Integration Dev'
+  DEFAULT_ROLE = mule_integration_role
+  DEFAULT_WAREHOUSE = 'compute_wh' -- Replace with your warehouse
+  DEFAULT_NAMESPACE = 'my_database.my_schema1' -- Optional, set default schema
+  COMMENT = 'User for MuleSoft integration with key-pair authentication'
+  MUST_CHANGE_PASSWORD = FALSE; -- No password, so this is irrelevant but set for clarity
 
-# Set up the tracer provider
-trace.set_tracer_provider(TracerProvider(resource=resource))
+-- Step 4: Assign the custom role to the user
+GRANT ROLE mule_integration_role TO USER mule_integration_dev;
 
-# Configure OTLP exporter
-otlp_exporter = OTLPSpanExporter(endpoint="http://localhost:4318/v1/traces")
-span_processor = BatchSpanProcessor(otlp_exporter)
-trace.get_tracer_provider().add_span_processor(span_processor)
+-- Step 5: Set up public key for key-pair authentication
+-- Replace '<public_key_content>' with the actual RSA public key (without BEGIN/END markers)
+ALTER USER mule_integration_dev
+  SET RSA_PUBLIC_KEY = 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...'; -- Add your public key here
 
-# Initialize FastAPI app
-app = FastAPI()
-
-# Instrument FastAPI
-FastAPIInstrumentor.instrument_app(app)
-
-# Instrument HTTPX client (if your app makes HTTP requests)
-HTTPXClientInstrumentor().instrument()
-
-# Create a tracer for manual spans
-tracer = trace.get_tracer(__name__)
-
-@app.get("/")
-async def read_root():
-    # Create a manual span for custom operation
-    with tracer.start_as_current_span("custom-operation") as span:
-        span.set_attribute("custom.attribute", "example-value")
-        # Simulate some work
-        result = {"message": "Hello, World!"}
-        span.set_attribute("response.message", result["message"])
-        return result
-
-@app.get("/items/{item_id}")
-async def read_item(item_id: int):
-    with tracer.start_as_current_span("fetch-item") as span:
-        span.set_attribute("item.id", item_id)
-        # Simulate database query
-        item = {"item_id": item_id, "name": f"Item {item_id}"}
-        span.set_attribute("item.name", item["name"])
-        return item
+-- Step 6: Verify user and role setup
+SHOW USERS LIKE 'MULE_INTEGRATION_DEV';
+SHOW GRANTS TO USER mule_integration_dev;
+SHOW GRANTS ON ROLE mule_integration_role;
